@@ -2,6 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Recurso nativo: vibración (permiso normal, se concede al instalar) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Recurso nativo: síntesis de voz. Android 11+ exige declarar que buscamos el motor TTS -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

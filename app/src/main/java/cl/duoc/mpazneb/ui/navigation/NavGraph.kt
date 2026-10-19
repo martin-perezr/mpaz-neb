@@ -10,8 +10,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import cl.duoc.mpazneb.model.Rol
 import cl.duoc.mpazneb.ui.components.PantallaPendiente
 import cl.duoc.mpazneb.ui.screens.auth.BienvenidaScreen
+import cl.duoc.mpazneb.ui.screens.auth.LoginScreen
 
 /** Vuelve a Bienvenida borrando todo el historial (al salir o al terminar una sesión). */
 private fun NavHostController.irABienvenida() = navigate(Rutas.BIENVENIDA) {
@@ -36,7 +38,15 @@ fun MpazNavHost(nav: NavHostController = rememberNavController()) {
                 onEstudiante = { nav.navigate(Rutas.CODIGO) }
             )
         }
-        composable(Rutas.LOGIN) { PantallaPendiente("Login") }
+        composable(Rutas.LOGIN) {
+            LoginScreen(
+                onIngresado = { rol ->
+                    val destino = if (rol == Rol.ADMIN) Rutas.CATALOGO else Rutas.ASISTENTE_INICIO
+                    nav.navigate(destino) { popUpTo(Rutas.BIENVENIDA) }
+                },
+                onVolver = { nav.popBackStack() }
+            )
+        }
         composable(Rutas.CODIGO) { PantallaPendiente("Código del estudiante") }
 
         // ---------- Docente / UTP (Matías) ----------

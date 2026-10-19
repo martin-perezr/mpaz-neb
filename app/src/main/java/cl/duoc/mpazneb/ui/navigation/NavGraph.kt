@@ -7,14 +7,17 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import cl.duoc.mpazneb.model.Rol
 import cl.duoc.mpazneb.ui.components.PantallaPendiente
 import cl.duoc.mpazneb.ui.screens.auth.BienvenidaScreen
 import cl.duoc.mpazneb.ui.screens.auth.LoginScreen
 import cl.duoc.mpazneb.ui.screens.estudiante.CodigoScreen
+import cl.duoc.mpazneb.ui.screens.estudiante.SesionEstudianteScreen
 
 /** Vuelve a Bienvenida borrando todo el historial (al salir o al terminar una sesión). */
 private fun NavHostController.irABienvenida() = navigate(Rutas.BIENVENIDA) {
@@ -66,6 +69,14 @@ fun MpazNavHost(nav: NavHostController = rememberNavController()) {
         composable(Rutas.RESULTADOS) { PantallaPendiente("Resultados") }
 
         // ---------- Estudiante (Martín) ----------
-        composable(Rutas.SESION) { PantallaPendiente("Sesión del estudiante") }
+        composable(
+            Rutas.SESION,
+            arguments = listOf(navArgument("asignacionId") { type = NavType.LongType })
+        ) { entrada ->
+            SesionEstudianteScreen(
+                asignacionId = entrada.arguments?.getLong("asignacionId") ?: 0L,
+                onSalir = { nav.irABienvenida() }
+            )
+        }
     }
 }

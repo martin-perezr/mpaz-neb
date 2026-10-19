@@ -114,7 +114,12 @@ fun LoginScreen(
                             iconoInicio = Icons.Filled.Person,
                             ayuda = "Entre 4 y 20 caracteres, sin espacios",
                             mostrarValido = true,
-                            teclado = KeyboardOptions(imeAction = ImeAction.Next)
+                            // Sin autocorrector: algunos teclados agregan un espacio después del punto (utp. demo).
+                            teclado = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                autoCorrectEnabled = false,
+                                imeAction = ImeAction.Next
+                            )
                         )
                         CampoValidado(
                             valor = estado.clave,

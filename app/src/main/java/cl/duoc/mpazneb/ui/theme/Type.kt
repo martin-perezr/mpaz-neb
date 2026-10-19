@@ -44,5 +44,5 @@ object TextoEstudiante {
     val pregunta = TextStyle(fontFamily = Andika, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 40.sp)
     val alternativa = TextStyle(fontFamily = Andika, fontSize = 24.sp, lineHeight = 32.sp)
     val instruccion = TextStyle(fontFamily = Andika, fontSize = 22.sp, lineHeight = 30.sp)
-    val boton = TextStyle(fontFamily = Andika, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+    val boton = TextStyle(fontFamily = Andika, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp)
 }

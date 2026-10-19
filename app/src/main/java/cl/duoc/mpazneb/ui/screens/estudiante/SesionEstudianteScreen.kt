@@ -12,7 +12,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,7 +139,11 @@ fun SesionEstudianteScreen(
             EncabezadoEstudiante(
                 titulo = if (estado.fase == Fase.INICIO || estado.fase == Fase.FIN) actividad.nombre
                 else "Pregunta ${estado.indice + 1} de ${estado.total}",
-                subtitulo = if (estado.fase == Fase.INICIO) actividad.modulo.etiqueta else actividad.nombre,
+                subtitulo = when (estado.fase) {
+                    Fase.INICIO -> actividad.modulo.etiqueta
+                    Fase.FIN -> "Actividad terminada"
+                    else -> actividad.nombre
+                },
                 colores = colores,
                 progreso = estado.progreso,
                 estrellas = estado.estrellas,
@@ -177,10 +183,18 @@ fun SesionEstudianteScreen(
                     Text(elegida, style = TextoEstudiante.alternativa, color = colores.texto)
                 }
             },
-            confirmButton = { BotonEstudiante("Sí, enviar", vm::confirmar, colores.fuerte) },
-            dismissButton = {
-                OutlinedButton(onClick = vm::revisar, modifier = Modifier.height(72.dp), shape = RoundedCornerShape(24.dp)) {
-                    Text("Revisar", style = TextoEstudiante.boton)
+            // Los dos botones van uno sobre otro y a todo el ancho: se leen bien en tablet y en teléfono.
+            confirmButton = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BotonEstudiante("Sí, enviar", vm::confirmar, colores.fuerte, modifier = Modifier.fillMaxWidth())
+                    OutlinedButton(
+                        onClick = vm::revisar,
+                        modifier = Modifier.fillMaxWidth().height(64.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        border = BorderStroke(2.dp, colores.fuerte)
+                    ) {
+                        Text("Revisar", style = TextoEstudiante.boton, color = colores.texto)
+                    }
                 }
             }
         )
@@ -200,14 +214,20 @@ fun SesionEstudianteScreen(
 @Composable
 private fun ContenidoInicio(estado: SesionUiState, colores: ColoresModulo, voz: Voz, onComenzar: () -> Unit) {
     val a = estado.actividad ?: return
-    val ancha = rememberTamanoVentana() == TamanoVentana.EXPANDIDA
+    val tamano = rememberTamanoVentana()
+    val ancha = tamano == TamanoVentana.EXPANDIDA
+    val compacta = tamano == TamanoVentana.COMPACTA
+    val esLectura = a.modulo == Modulo.LECTURA && a.textoCuerpo != null
     val instrucciones: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
                 a.instrucciones, style = TextoEstudiante.instruccion, color = colores.texto,
                 modifier = Modifier.fillMaxWidth().background(colores.fondo, RoundedCornerShape(24.dp)).padding(20.dp)
             )
-            BotonEscuchar(onClick = { voz.hablar(a.instrucciones) }, texto = "Escuchar instrucciones")
+            BotonEscuchar(
+                onClick = { voz.hablar(a.instrucciones) },
+                texto = if (compacta) "Escuchar" else "Escuchar instrucciones"
+            )
             a.imagenRuta?.let {
                 AsyncImage(
                     model = File(it), contentDescription = "Ilustración", contentScale = ContentScale.Crop,
@@ -238,18 +258,29 @@ private fun ContenidoInicio(estado: SesionUiState, colores: ColoresModulo, voz: 
                 Column(Modifier.widthIn(max = 640.dp)) { instrucciones() }
             }
         }
-        Row(
-            Modifier.fillMaxWidth().background(Color.White).padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (a.modulo == Modulo.LECTURA && a.textoCuerpo != null) {
-                BotonEscuchar(onClick = { voz.hablar(a.textoCuerpo) }, texto = "Escuchar el texto")
+        val textoComenzar = if (a.modulo == Modulo.LECTURA) "Ya leí, vamos" else "Comenzar"
+        if (compacta) {
+            // Teléfono: los botones van uno sobre otro y a todo el ancho para que ninguno se aplaste.
+            Column(
+                Modifier.fillMaxWidth().background(Color.White).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (esLectura) {
+                    BotonEscuchar(onClick = { voz.hablar(a.textoCuerpo.orEmpty()) }, texto = "Escuchar el texto", modifier = Modifier.fillMaxWidth())
+                }
+                BotonEstudiante(textoComenzar, onComenzar, colores.fuerte, modifier = Modifier.fillMaxWidth(), icono = Icons.AutoMirrored.Filled.Send)
             }
-            BotonEstudiante(
-                if (a.modulo == Modulo.LECTURA) "Ya leí, vamos" else "Comenzar",
-                onComenzar, colores.fuerte, icono = androidx.compose.material.icons.Icons.AutoMirrored.Filled.Send
-            )
+        } else {
+            Row(
+                Modifier.fillMaxWidth().background(Color.White).padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (esLectura) {
+                    BotonEscuchar(onClick = { voz.hablar(a.textoCuerpo.orEmpty()) }, texto = "Escuchar el texto")
+                }
+                BotonEstudiante(textoComenzar, onComenzar, colores.fuerte, icono = Icons.AutoMirrored.Filled.Send)
+            }
         }
     }
 }
@@ -297,7 +328,7 @@ private fun ContenidoPregunta(
             if (actividad.modulo == Modulo.MATEMATICA && pregunta.numeroA != null && pregunta.numeroB != null) {
                 BloquesDecenas(
                     pregunta.numeroA, pregunta.numeroB, pregunta.operacion ?: "+",
-                    Modifier.background(Menta, RoundedCornerShape(20.dp)).padding(4.dp)
+                    Modifier.horizontalScroll(rememberScrollState()).background(Menta, RoundedCornerShape(20.dp)).padding(4.dp)
                 )
             }
             estado.alternativas.forEachIndexed { i, alt ->
@@ -348,6 +379,7 @@ private fun ContenidoPregunta(
 private fun PanelFeedback(estado: SesionUiState, onSiguiente: () -> Unit, onReintentar: () -> Unit, modifier: Modifier) {
     val pregunta = estado.preguntaActual?.pregunta
     val visible = estado.fase == Fase.ACIERTO || estado.fase == Fase.CASI || estado.fase == Fase.REVELAR
+    val compacta = rememberTamanoVentana() == TamanoVentana.COMPACTA
     AnimatedVisibility(
         visible = visible && pregunta != null,
         enter = slideInVertically { it } + fadeIn(),
@@ -356,70 +388,108 @@ private fun PanelFeedback(estado: SesionUiState, onSiguiente: () -> Unit, onRein
     ) {
         val textoBoton = if (estado.esUltima) "Terminar" else "Siguiente"
         when (estado.fase) {
-            Fase.ACIERTO -> Panel(VerdeLogroFondo, VerdeLogro) {
-                Row { EstrellaAnimada(0); EstrellaAnimada(150); EstrellaAnimada(300) }
-                Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                    Text("¡Muy bien!", style = TextoEstudiante.pregunta, color = VerdeLogroTexto)
-                    Text(pregunta?.retroalimentacion.orEmpty(), style = TextoEstudiante.instruccion, color = VerdeLogroTexto)
-                }
-                BotonEstudiante(textoBoton, onSiguiente, VerdeLogro)
-            }
+            Fase.ACIERTO -> Panel(
+                fondo = VerdeLogroFondo, borde = VerdeLogro, compacta = compacta,
+                icono = {
+                    val t = if (compacta) 36 else 56
+                    Row { EstrellaAnimada(0, t); EstrellaAnimada(150, t); EstrellaAnimada(300, t) }
+                },
+                // El título ya dice "¡Muy bien!": se quita del mensaje si el docente lo escribió al inicio.
+                titulo = "¡Muy bien!", mensaje = pregunta?.retroalimentacion.orEmpty().removePrefix("¡Muy bien!").trim(), colorTexto = VerdeLogroTexto,
+                boton = { m -> BotonEstudiante(textoBoton, onSiguiente, VerdeLogro, modifier = m) }
+            )
             Fase.CASI -> {
                 // Animación: el ícono se sacude suavemente para invitar a intentar de nuevo.
                 val sacudida = remember { Animatable(0f) }
                 LaunchedEffect(Unit) { for (x in listOf(-12f, 12f, -8f, 8f, 0f)) sacudida.animateTo(x, tween(60)) }
-                Panel(AmarilloAnimo, AmarilloBorde) {
-                    Box(
-                        Modifier.offset { IntOffset(sacudida.value.roundToInt(), 0) }.size(72.dp).background(Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) { Icon(Icons.Filled.Refresh, contentDescription = null, tint = AmarilloTexto, modifier = Modifier.size(40.dp)) }
-                    Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                        Text("¡Casi! Tú puedes", style = TextoEstudiante.pregunta, color = AmarilloTexto)
-                        Text(pregunta?.pista.orEmpty(), style = TextoEstudiante.instruccion, color = AmarilloTexto)
-                    }
-                    BotonEstudiante("Intentar otra vez", onReintentar, AmarilloTexto)
-                }
+                Panel(
+                    fondo = AmarilloAnimo, borde = AmarilloBorde, compacta = compacta,
+                    icono = {
+                        val t = if (compacta) 52.dp else 72.dp
+                        Box(
+                            Modifier.offset { IntOffset(sacudida.value.roundToInt(), 0) }.size(t).background(Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) { Icon(Icons.Filled.Refresh, contentDescription = null, tint = AmarilloTexto, modifier = Modifier.size(t * 0.55f)) }
+                    },
+                    titulo = "¡Casi! Tú puedes", mensaje = pregunta?.pista.orEmpty(), colorTexto = AmarilloTexto,
+                    boton = { m -> BotonEstudiante("Intentar otra vez", onReintentar, AmarilloTexto, modifier = m) }
+                )
             }
-            else -> Panel(AzulHoja, AzulTinta) {
-                Column(Modifier.weight(1f).padding(end = 16.dp)) {
-                    Text("Esta vez no resultó, ¡y está bien!", style = TextoEstudiante.pregunta, color = AzulNoche)
-                    Text(
-                        "La respuesta era: ${estado.correcta?.texto.orEmpty()}. " + (pregunta?.procedimiento?.let { "($it) " } ?: "") + "¡Sigamos!",
-                        style = TextoEstudiante.instruccion, color = AzulNoche
-                    )
+            else -> Panel(
+                fondo = AzulHoja, borde = AzulTinta, compacta = compacta, icono = null,
+                titulo = "Esta vez no resultó, ¡y está bien!",
+                mensaje = "La respuesta era: ${estado.correcta?.texto.orEmpty()}. " + (pregunta?.procedimiento?.let { "($it) " } ?: "") + "¡Sigamos!",
+                colorTexto = AzulNoche,
+                boton = { m -> BotonEstudiante(textoBoton, onSiguiente, AzulTinta, modifier = m) }
+            )
+        }
+    }
+}
+
+/**
+ * Panel de retroalimentación. En tablet va en una fila (ícono, texto, botón);
+ * en teléfono se apila en columna y el botón ocupa todo el ancho.
+ */
+@Composable
+private fun Panel(
+    fondo: Color,
+    borde: Color,
+    compacta: Boolean,
+    icono: (@Composable () -> Unit)?,
+    titulo: String,
+    mensaje: String,
+    colorTexto: Color,
+    boton: @Composable (Modifier) -> Unit
+) {
+    Column(Modifier.fillMaxWidth().background(fondo)) {
+        Box(Modifier.fillMaxWidth().height(4.dp).background(borde))
+        if (compacta) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    icono?.invoke()
+                    Text(titulo, style = TextoEstudiante.pregunta.copy(fontSize = 24.sp, lineHeight = 30.sp), color = colorTexto)
                 }
-                BotonEstudiante(textoBoton, onSiguiente, AzulTinta)
+                Text(mensaje, style = TextoEstudiante.instruccion.copy(fontSize = 19.sp, lineHeight = 26.sp), color = colorTexto)
+                boton(Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                icono?.invoke()
+                Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                    Text(titulo, style = TextoEstudiante.pregunta, color = colorTexto)
+                    Text(mensaje, style = TextoEstudiante.instruccion, color = colorTexto)
+                }
+                boton(Modifier)
             }
         }
     }
 }
 
 @Composable
-private fun Panel(fondo: Color, borde: Color, contenido: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
-    Column(Modifier.fillMaxWidth().background(fondo)) {
-        Box(Modifier.fillMaxWidth().height(4.dp).background(borde))
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            content = contenido
-        )
-    }
-}
-
-@Composable
 private fun ContenidoFin(estado: SesionUiState, onSalir: () -> Unit) {
+    val compacta = rememberTamanoVentana() == TamanoVentana.COMPACTA
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
-            repeat(estado.total) { i -> EstrellaAnimada(150L * i, if (i == estado.total / 2) 120 else 96, ganada = i < estado.estrellas) }
+            val grande = if (compacta) 96 else 120
+            val chica = if (compacta) 72 else 96
+            repeat(estado.total) { i -> EstrellaAnimada(150L * i, if (i == estado.total / 2) grande else chica, ganada = i < estado.estrellas) }
         }
-        Text("¡Terminaste!", style = TextoEstudiante.pregunta.copy(fontSize = 52.sp, lineHeight = 60.sp))
+        Text(
+            "¡Terminaste!",
+            style = TextoEstudiante.pregunta.copy(fontSize = if (compacta) 38.sp else 52.sp, lineHeight = if (compacta) 46.sp else 60.sp),
+            textAlign = TextAlign.Center
+        )
         Text(
             "Respondiste las ${estado.total} preguntas y ganaste ${estado.estrellas} estrella(s).\n¡Cada vez lo haces mejor!",
-            style = TextoEstudiante.instruccion.copy(fontSize = 26.sp, lineHeight = 36.sp), textAlign = TextAlign.Center, color = Grafito
+            style = TextoEstudiante.instruccion.copy(fontSize = if (compacta) 21.sp else 26.sp, lineHeight = if (compacta) 30.sp else 36.sp),
+            textAlign = TextAlign.Center, color = Grafito
         )
         Row(
             Modifier.background(AzulHoja, RoundedCornerShape(20.dp)).padding(18.dp),

@@ -13,10 +13,6 @@ import cl.duoc.mpazneb.model.Observacion
 import cl.duoc.mpazneb.model.Pregunta
 import cl.duoc.mpazneb.model.Respuesta
 import cl.duoc.mpazneb.model.Usuario
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -52,13 +48,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
     }
 
-    /** Al crear la base por primera vez se cargan los datos ficticios. */
+    /**
+     * Al crear la base por primera vez se cargan los datos ficticios en la misma transacción,
+     * antes de que la app pueda hacer cualquier consulta.
+     */
     private class SemillaCallback : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
-            CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                instancia?.let { Semilla.poblar(it) }
-            }
+            Semilla.poblar(db)
         }
     }
 }

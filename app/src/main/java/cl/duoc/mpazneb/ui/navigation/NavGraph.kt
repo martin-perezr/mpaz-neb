@@ -14,6 +14,7 @@ import cl.duoc.mpazneb.model.Rol
 import cl.duoc.mpazneb.ui.components.PantallaPendiente
 import cl.duoc.mpazneb.ui.screens.auth.BienvenidaScreen
 import cl.duoc.mpazneb.ui.screens.auth.LoginScreen
+import cl.duoc.mpazneb.ui.screens.estudiante.CodigoScreen
 
 /** Vuelve a Bienvenida borrando todo el historial (al salir o al terminar una sesión). */
 private fun NavHostController.irABienvenida() = navigate(Rutas.BIENVENIDA) {
@@ -47,7 +48,12 @@ fun MpazNavHost(nav: NavHostController = rememberNavController()) {
                 onVolver = { nav.popBackStack() }
             )
         }
-        composable(Rutas.CODIGO) { PantallaPendiente("Código del estudiante") }
+        composable(Rutas.CODIGO) {
+            CodigoScreen(
+                onCodigoValido = { id -> nav.navigate(Rutas.sesion(id)) { popUpTo(Rutas.CODIGO) { inclusive = true } } },
+                onVolver = { nav.popBackStack() }
+            )
+        }
 
         // ---------- Docente / UTP (Matías) ----------
         composable(Rutas.CATALOGO) { PantallaPendiente("Catálogo") }

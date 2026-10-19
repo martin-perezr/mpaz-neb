@@ -11,6 +11,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,6 +77,9 @@ fun CodigoScreen(
     val estado by vm.estado.collectAsStateWithLifecycle()
     val voz = rememberVoz()
     val tamano = rememberTamanoVentana()
+    // En teléfono las casillas y las teclas se achican para caber en ~320 dp de ancho.
+    val compacta = tamano == TamanoVentana.COMPACTA
+    val tecla = if (compacta) 76.dp else 96.dp
 
     LaunchedEffect(estado.asignacionId) {
         estado.asignacionId?.let {
@@ -90,14 +95,19 @@ fun CodigoScreen(
 
     val textoYCasillas: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            Text("¡Hola! Escribe tu código", style = TextoEstudiante.pregunta.copy(fontSize = 38.sp, lineHeight = 46.sp))
+            Text(
+                "¡Hola! Escribe tu código",
+                style = TextoEstudiante.pregunta.copy(fontSize = if (compacta) 30.sp else 38.sp, lineHeight = if (compacta) 38.sp else 46.sp)
+            )
             Text("Son 4 números. Tu asistente te los muestra.", style = TextoEstudiante.instruccion, color = Grafito)
             BotonEscuchar(onClick = { voz.hablar("Hola. Escribe tu código. Son cuatro números. Tu asistente te los muestra.") })
             Row(
                 Modifier.offset { IntOffset(sacudida.value.roundToInt(), 0) },
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (compacta) 10.dp else 14.dp)
             ) {
-                repeat(4) { i -> CasillaDigito(estado.codigo.getOrNull(i), activa = i == estado.codigo.length, conError = estado.mensaje != null) }
+                repeat(4) { i ->
+                    CasillaDigito(estado.codigo.getOrNull(i), activa = i == estado.codigo.length, conError = estado.mensaje != null, compacta = compacta)
+                }
             }
             AnimatedVisibility(visible = estado.mensaje != null, enter = scaleIn()) {
                 Row(
@@ -123,7 +133,7 @@ fun CodigoScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(Modifier.width(460.dp)) { textoYCasillas() }
-                Teclado(estado.completo, vm::tecla, vm::borrar, vm::entrar)
+                Teclado(estado.completo, vm::tecla, vm::borrar, vm::entrar, tecla)
             }
         } else {
             Column(
@@ -132,14 +142,14 @@ fun CodigoScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 textoYCasillas()
-                Teclado(estado.completo, vm::tecla, vm::borrar, vm::entrar)
+                Teclado(estado.completo, vm::tecla, vm::borrar, vm::entrar, tecla)
             }
         }
     }
 }
 
 @Composable
-private fun CasillaDigito(digito: Char?, activa: Boolean, conError: Boolean) {
+private fun CasillaDigito(digito: Char?, activa: Boolean, conError: Boolean, compacta: Boolean) {
     val borde by animateColorAsState(
         when {
             conError -> AmarilloBorde
@@ -148,36 +158,38 @@ private fun CasillaDigito(digito: Char?, activa: Boolean, conError: Boolean) {
         }, label = "bordeCasilla"
     )
     Box(
-        Modifier.size(width = 76.dp, height = 96.dp)
+        Modifier.size(width = if (compacta) 60.dp else 76.dp, height = if (compacta) 76.dp else 96.dp)
             .background(Color.White, RoundedCornerShape(20.dp))
             .border(3.dp, borde, RoundedCornerShape(20.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Text(digito?.toString().orEmpty(), fontFamily = Andika, fontSize = 48.sp, color = TintaTexto)
+        Text(digito?.toString().orEmpty(), fontFamily = Andika, fontSize = if (compacta) 38.sp else 48.sp, color = TintaTexto)
     }
 }
 
 @Composable
-private fun Teclado(completo: Boolean, onTecla: (Char) -> Unit, onBorrar: () -> Unit, onEntrar: () -> Unit) {
+private fun Teclado(completo: Boolean, onTecla: (Char) -> Unit, onBorrar: () -> Unit, onEntrar: () -> Unit, tecla: Dp) {
     val filas = listOf("123", "456", "789")
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         filas.forEach { fila ->
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                fila.forEach { d -> TeclaNumero(d.toString()) { onTecla(d) } }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                fila.forEach { d -> TeclaNumero(d.toString(), tecla) { onTecla(d) } }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = onBorrar,
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier.size(tecla),
+                contentPadding = PaddingValues(0.dp),
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(2.dp, Borde),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = GrisSuave, contentColor = Grafito)
             ) { Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = "Borrar", modifier = Modifier.size(34.dp)) }
-            TeclaNumero("0") { onTecla('0') }
+            TeclaNumero("0", tecla) { onTecla('0') }
             Button(
                 onClick = onEntrar,
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier.size(tecla),
+                contentPadding = PaddingValues(0.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (completo) NaranjaLapiz else GrisDeshabilitado,
@@ -189,14 +201,15 @@ private fun Teclado(completo: Boolean, onTecla: (Char) -> Unit, onBorrar: () -> 
 }
 
 @Composable
-private fun TeclaNumero(texto: String, onClick: () -> Unit) {
+private fun TeclaNumero(texto: String, tecla: Dp, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier.size(96.dp),
+        modifier = Modifier.size(tecla),
+        contentPadding = PaddingValues(0.dp),
         shape = RoundedCornerShape(24.dp),
         border = BorderStroke(2.dp, Durazno),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = TintaTexto)
     ) {
-        Text(texto, fontFamily = Andika, fontSize = 40.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().height(52.dp))
+        Text(texto, fontFamily = Andika, fontSize = 40.sp, textAlign = TextAlign.Center)
     }
 }

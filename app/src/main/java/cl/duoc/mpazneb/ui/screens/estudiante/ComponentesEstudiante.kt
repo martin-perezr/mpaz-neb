@@ -47,6 +47,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.duoc.mpazneb.ui.components.BarraAvance
+import cl.duoc.mpazneb.ui.components.TamanoVentana
+import cl.duoc.mpazneb.ui.components.rememberTamanoVentana
 import cl.duoc.mpazneb.ui.theme.AmarilloAnimo
 import cl.duoc.mpazneb.ui.theme.AmarilloBorde
 import cl.duoc.mpazneb.ui.theme.Andika
@@ -75,7 +77,8 @@ fun EncabezadoEstudiante(
     estrellas: Int,
     onSalirLargo: () -> Unit
 ) {
-    Column(Modifier.fillMaxWidth().background(colores.fuerte).padding(horizontal = 20.dp, vertical = 14.dp)) {
+    val compacta = rememberTamanoVentana() == TamanoVentana.COMPACTA
+    Column(Modifier.fillMaxWidth().background(colores.fuerte).padding(horizontal = if (compacta) 14.dp else 20.dp, vertical = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             // Mantener presionado: así un niño no sale por accidente.
             Box(
@@ -84,7 +87,11 @@ fun EncabezadoEstudiante(
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Filled.Lock, contentDescription = "Salir, solo asistente", tint = Color.White) }
             Column(Modifier.weight(1f)) {
-                Text(titulo, style = TextoEstudiante.titulo, color = Color.White)
+                Text(
+                    titulo,
+                    style = if (compacta) TextoEstudiante.titulo.copy(fontSize = 21.sp, lineHeight = 26.sp) else TextoEstudiante.titulo,
+                    color = Color.White
+                )
                 Text(subtitulo, style = MaterialTheme.typography.titleSmall, color = Color.White.copy(alpha = 0.9f))
             }
             Row(

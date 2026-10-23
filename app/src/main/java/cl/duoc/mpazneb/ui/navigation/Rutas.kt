@@ -11,7 +11,7 @@ object Rutas {
     const val EDITOR_PREGUNTA = "admin/actividad/{actividadId}/pregunta/{preguntaId}"
 
     const val ASISTENTE_INICIO = "asistente/inicio"
-    const val ASIGNAR = "asistente/asignar"
+    const val ASIGNAR = "asistente/asignar/{actividadId}"
     const val RESULTADOS = "asistente/resultados/{asignacionId}"
 
     const val SESION = "estudiante/sesion/{asignacionId}"
@@ -19,6 +19,7 @@ object Rutas {
     /** id = 0 significa "actividad nueva". */
     fun editorActividad(id: Long) = "admin/actividad/$id"
     fun editorPregunta(actividadId: Long, preguntaId: Long) = "admin/actividad/$actividadId/pregunta/$preguntaId"
+    fun asignar(actividadId: Long) = "asistente/asignar/$actividadId"
     fun resultados(asignacionId: Long) = "asistente/resultados/$asignacionId"
     fun sesion(asignacionId: Long) = "estudiante/sesion/$asignacionId"
 }

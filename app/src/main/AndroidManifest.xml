@@ -5,6 +5,8 @@
     <!-- Recurso nativo: vibración (permiso normal, se concede al instalar) -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- La exportación CSV usa el selector de archivos y no pide permiso de almacenamiento. -->
+
     <!-- Recurso nativo: síntesis de voz. Android 11+ exige declarar que buscamos el motor TTS -->
     <queries>
         <intent>

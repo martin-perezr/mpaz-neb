@@ -14,7 +14,8 @@ import cl.duoc.mpazneb.model.TipoPregunta
  * Datos de prueba 100 % ficticios. Cuentas:
  *  - utp.demo / Utp2026        (Docente / UTP)
  *  - asistente.aula2 / Aula2026 (Asistente de aula)
- * Código de estudiante de prueba: 4821 (Pudú-12, "El volantín de Tomás").
+ * Código de estudiante de prueba: 482196 (Pudú-12, "El volantín de Tomás").
+ * Código vencido de prueba: 111111. Código ya usado: 222222.
  *
  * Se inserta directamente en la base que se está creando (dentro de onCreate), de forma síncrona:
  * así ninguna consulta de la app puede llegar antes de que los datos estén cargados.
@@ -94,25 +95,114 @@ object Semilla {
         pregunta(db, feria, 2, TipoPregunta.PROBLEMA, "Pedro tiene 18 láminas y su prima le regala 21. ¿Cuántas tiene ahora?",
             listOf("39", "3", "49"), 0, "¡Muy bien! 18 + 21 = 39.", "Le regalan más: hay que sumar.", 18, 21, "+", "18 + 21 = 39")
 
+        val gato = actividad(
+            db, "El gato Mimí", Modulo.LECTURA, 1, "Comprensión lectora",
+            "Identificar información explícita en un texto muy breve.", 1,
+            "Lee el texto con calma y responde.", 2, EstadoActividad.DISPONIBLE,
+            "El gato Mimí",
+            "Mimí es un gato gris. Vive en una casa azul. En la mañana toma leche tibia y después duerme al sol."
+        )
+        pregunta(db, gato, 1, TipoPregunta.EXPLICITA, "¿De qué color es el gato Mimí?",
+            listOf("Gris", "Azul", "Blanco"), 0,
+            "¡Muy bien! El texto dice que Mimí es un gato gris.", "Lee la primera oración.")
+        pregunta(db, gato, 2, TipoPregunta.VOCABULARIO, "En el texto, “tibia” quiere decir…",
+            listOf("Un poco caliente", "Muy fría", "Con azúcar"), 0,
+            "¡Muy bien! La leche tibia está un poco caliente.", "Piensa en cómo se siente la leche.")
+
+        val manzanas = actividad(
+            db, "Manzanas en la mesa", Modulo.MATEMATICA, 1, "Conteo y suma hasta 10",
+            "Contar y sumar cantidades pequeñas.", 1,
+            "Cuenta con calma y elige el resultado.", 2, EstadoActividad.DISPONIBLE
+        )
+        pregunta(db, manzanas, 1, TipoPregunta.CALCULO, "¿Cuánto es 3 + 2?",
+            listOf("5", "1", "4"), 0, "¡Muy bien! 3 + 2 = 5.", "Junta los dos grupos y vuelve a contar.",
+            3, 2, "+", "3 + 2 = 5")
+        pregunta(db, manzanas, 2, TipoPregunta.PROBLEMA, "Hay 6 manzanas y se comen 1. ¿Cuántas quedan?",
+            listOf("5", "7", "6"), 0, "¡Muy bien! 6 − 1 = 5.", "Se come una: queda una menos.",
+            6, 1, "−", "6 − 1 = 5")
+
+        val cajas = actividad(
+            db, "Cajas de lápices", Modulo.MATEMATICA, 3, "Multiplicación inicial",
+            "Resolver una multiplicación como suma repetida.", 2,
+            "Lee el problema y elige el resultado.", 2, EstadoActividad.DISPONIBLE
+        )
+        pregunta(db, cajas, 1, TipoPregunta.PROBLEMA, "Hay 4 cajas con 3 lápices cada una. ¿Cuántos lápices hay?",
+            listOf("12", "7", "9"), 0, "¡Muy bien! 4 veces 3 es 12.", "Puedes sumar 3 + 3 + 3 + 3.",
+            4, 3, "×", "4 × 3 = 12")
+        pregunta(db, cajas, 2, TipoPregunta.CALCULO, "¿Cuánto es 5 × 2?",
+            listOf("10", "7", "52"), 0, "¡Muy bien! 5 × 2 = 10.", "Es lo mismo que 2 + 2 + 2 + 2 + 2.",
+            5, 2, "×", "5 × 2 = 10")
+
+        val puente = actividad(
+            db, "El puente de madera", Modulo.LECTURA, 4, "Comprensión lectora",
+            "Inferir una acción y reconocer el vocabulario de un texto breve.", 3,
+            "Lee el texto y responde las preguntas.", 2, EstadoActividad.DISPONIBLE,
+            "El puente de madera",
+            "Lara llegó al estero y vio que una tabla del puente estaba suelta. " +
+                "Avisó a su tío y juntos la afirmaron con una cuerda. Al cruzar, el agua sonaba debajo de sus pies."
+        )
+        pregunta(db, puente, 1, TipoPregunta.EXPLICITA, "¿Quién ayudó a Lara a afirmar la tabla?",
+            listOf("Su tío", "Su gato", "Una vecina"), 0,
+            "¡Muy bien! El texto dice que avisó a su tío.", "Busca con quién trabajó Lara.")
+        pregunta(db, puente, 2, TipoPregunta.IMPLICITA, "¿Por qué Lara avisó a su tío?",
+            listOf("Porque el puente estaba inseguro", "Porque quería nadar", "Porque tenía hambre"), 0,
+            "¡Muy bien! La tabla suelta hacía inseguro el puente.", "Fíjate en lo que Lara vio al llegar.")
+        pregunta(db, puente, 3, TipoPregunta.VOCABULARIO, "En el texto, “estero” es…",
+            listOf("Un curso de agua", "Un puente", "Una cuerda"), 0,
+            "¡Muy bien! El estero es el curso de agua que Lara debía cruzar.", "Lara llega allí antes de ver el puente.")
+
+        val recreo = actividad(
+            db, "Sumas en el recreo", Modulo.MATEMATICA, 2, "Adición",
+            "Sumar cantidades pequeñas de un juego.", 1,
+            "Resuelve la suma.", 2, EstadoActividad.DESACTIVADA
+        )
+        pregunta(db, recreo, 1, TipoPregunta.CALCULO, "¿Cuánto es 8 + 4?",
+            listOf("12", "4", "84"), 0, "¡Muy bien! 8 + 4 = 12.", "Suma las unidades.",
+            8, 4, "+", "8 + 4 = 12")
+
         // ---------- Una sesión ya finalizada para ver Resultados ----------
         val ahora = System.currentTimeMillis()
         val finalizada = db.insertar(
             "asignaciones",
             "estudianteId" to alumnos.getValue("Cóndor-03"), "actividadId" to lapices, "asistenteId" to asistenteId,
-            "codigo" to "0000", "creadaEn" to ahora - 3_600_000, "venceEn" to ahora - 1_800_000,
+            "codigo" to "000000", "creadaEn" to ahora - 3_600_000, "venceEn" to ahora - 1_800_000,
             "estado" to EstadoAsignacion.FINALIZADA.name, "iniciadaEn" to ahora - 3_500_000, "finalizadaEn" to ahora - 3_000_000
         )
         responder(db, finalizada, p1, correcta = true, intento = 1, fecha = ahora - 3_400_000)
         responder(db, finalizada, p2, correcta = false, intento = 1, fecha = ahora - 3_300_000)
         responder(db, finalizada, p2, correcta = true, intento = 2, fecha = ahora - 3_250_000)
         responder(db, finalizada, p3, correcta = true, intento = 1, fecha = ahora - 3_100_000)
+        db.insertar(
+            "observaciones",
+            "asignacionId" to finalizada,
+            "categoria" to "Participación",
+            "texto" to "Observación ficticia: Cóndor-03 resolvió los problemas con calma.",
+            "fecha" to ahora - 2_900_000
+        )
 
-        // ---------- Una sesión pendiente para probar el modo estudiante con el código 4821 ----------
+        // Código vigente de demostración. Dura un año para poder probarlo en la defensa.
+        // Los códigos que crea la asistente vencen a los 30 minutos.
         db.insertar(
             "asignaciones",
             "estudianteId" to alumnos.getValue("Pudú-12"), "actividadId" to volantin, "asistenteId" to asistenteId,
-            "codigo" to "4821", "creadaEn" to ahora, "venceEn" to ahora + 365L * 24 * 3_600_000,
+            "codigo" to "482196", "creadaEn" to ahora, "venceEn" to ahora + 365L * 24 * 3_600_000,
             "estado" to EstadoAsignacion.PENDIENTE.name
+        )
+
+        // Código vencido: existe, sigue pendiente, pero la hora ya pasó.
+        db.insertar(
+            "asignaciones",
+            "estudianteId" to alumnos.getValue("Zorro-07"), "actividadId" to lapices, "asistenteId" to asistenteId,
+            "codigo" to "111111", "creadaEn" to ahora - 3_600_000, "venceEn" to ahora - 60_000,
+            "estado" to EstadoAsignacion.PENDIENTE.name
+        )
+
+        // Código ya usado: la actividad terminó y el plazo todavía no vence.
+        db.insertar(
+            "asignaciones",
+            "estudianteId" to alumnos.getValue("Huemul-21"), "actividadId" to feria, "asistenteId" to asistenteId,
+            "codigo" to "222222", "creadaEn" to ahora, "venceEn" to ahora + 365L * 24 * 3_600_000,
+            "estado" to EstadoAsignacion.FINALIZADA.name, "iniciadaEn" to ahora, "finalizadaEn" to ahora
         )
     }
 

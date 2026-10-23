@@ -19,8 +19,8 @@ class AppContainer(context: Context) {
     private val sesion = SessionManager(context)
 
     val authRepository = AuthRepository(db.usuarioDao(), sesion)
-    val actividadRepository = ActividadRepository(db.actividadDao())
-    val asignacionRepository = AsignacionRepository(db.asignacionDao())
+    val actividadRepository = ActividadRepository(db.actividadDao(), authRepository)
+    val asignacionRepository = AsignacionRepository(db.asignacionDao(), db.actividadDao(), authRepository)
     val almacenImagenes = AlmacenImagenes(context)
 }
 

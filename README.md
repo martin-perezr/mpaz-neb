@@ -2,9 +2,11 @@
 
 Aplicación Android para practicar Lectura y Matemática de 1.º a 4.º básico en la Escuela Escritora Marcela Paz. Es un MVP académico: usa personas y observaciones ficticias, no pone notas y no reemplaza al profesorado.
 
-## Integrantes conocidos
+## Integrantes 
 
-En el código y en el historial de `develop` aparecen Martín y Matías. Esta continuación está en la rama local `hana`, con la identidad `hanaeruu`.
+- Hanael Echeverría
+- Matías Soto
+- Martín Pérez
 
 ## Tecnologías
 

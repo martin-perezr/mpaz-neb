@@ -39,7 +39,7 @@ data class SesionUiState(
     val estrellas: Int = 0
 ) {
     val preguntaActual: PreguntaConAlternativas? get() = preguntas.getOrNull(indice)
-    val alternativas: List<Alternativa> get() = preguntaActual?.alternativas.orEmpty().sortedBy { it.id }
+    val alternativas: List<Alternativa> get() = preguntaActual?.alternativas.orEmpty()
     val correcta: Alternativa? get() = alternativas.firstOrNull { it.esCorrecta }
     val total: Int get() = preguntas.size
     val esUltima: Boolean get() = indice == total - 1
@@ -77,7 +77,11 @@ class SesionEstudianteViewModel(
                 it.copy(
                     fase = Fase.INICIO,
                     actividad = completa.actividad,
-                    preguntas = completa.preguntas.sortedBy { p -> p.pregunta.orden }
+                    // Las alternativas se mezclan una sola vez al cargar: así la correcta no queda
+                    // siempre en la A y no cambia de lugar entre un intento y otro.
+                    preguntas = completa.preguntas
+                        .sortedBy { p -> p.pregunta.orden }
+                        .map { p -> p.copy(alternativas = p.alternativas.shuffled()) }
                 )
             }
         }

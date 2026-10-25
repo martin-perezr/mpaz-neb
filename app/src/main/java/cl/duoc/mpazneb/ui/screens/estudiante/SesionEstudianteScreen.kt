@@ -487,7 +487,7 @@ private fun ContenidoFin(estado: SesionUiState, onSalir: () -> Unit) {
             textAlign = TextAlign.Center
         )
         Text(
-            "Respondiste las ${estado.total} preguntas y ganaste ${estado.estrellas} estrella(s).\n¡Cada vez lo haces mejor!",
+            "Respondiste las ${estado.total} preguntas y ganaste ${estado.estrellas} estrella(s).\nEsto es una práctica. No es una nota.",
             style = TextoEstudiante.instruccion.copy(fontSize = if (compacta) 21.sp else 26.sp, lineHeight = if (compacta) 30.sp else 36.sp),
             textAlign = TextAlign.Center, color = Grafito
         )

@@ -19,7 +19,8 @@ import cl.duoc.mpazneb.model.Usuario
         Usuario::class, Estudiante::class, Actividad::class, Pregunta::class,
         Alternativa::class, Asignacion::class, Respuesta::class, Observacion::class
     ],
-    version = 1,
+    // Versión 2: la semilla pasó a códigos de 6 dígitos. Si la base ya existía, se vuelve a crear.
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

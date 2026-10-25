@@ -1,6 +1,9 @@
 package cl.duoc.mpazneb.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.background
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -51,7 +54,11 @@ import cl.duoc.mpazneb.ui.theme.AzulTinta
 import cl.duoc.mpazneb.ui.theme.GrisDeshabilitado
 import cl.duoc.mpazneb.ui.theme.Grafito
 import cl.duoc.mpazneb.ui.theme.TextoEstudiante
+import cl.duoc.mpazneb.ui.theme.RojoErrorFondo
+import cl.duoc.mpazneb.ui.theme.RojoErrorTexto
 import cl.duoc.mpazneb.ui.theme.VerdeLogro
+import cl.duoc.mpazneb.ui.theme.VerdeLogroFondo
+import cl.duoc.mpazneb.ui.theme.VerdeLogroTexto
 
 /**
  * Campo de texto con validación visual: borde rojo + ícono de error + mensaje bajo el campo,
@@ -252,6 +259,23 @@ fun BarraAvance(progreso: Float, color: Color, fondo: Color, modifier: Modifier 
 fun Cargando(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
+    }
+}
+
+/** Mensaje de éxito o error que aparece con una animación corta. */
+@Composable
+fun Aviso(texto: String?, esError: Boolean, modifier: Modifier = Modifier) {
+    val duracion = duracionAnimacion(220)
+    AnimatedVisibility(visible = !texto.isNullOrBlank(), modifier = modifier, enter = fadeIn(tween(duracion))) {
+        Text(
+            text = texto.orEmpty(),
+            color = if (esError) RojoErrorTexto else VerdeLogroTexto,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (esError) RojoErrorFondo else VerdeLogroFondo, RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        )
     }
 }
 

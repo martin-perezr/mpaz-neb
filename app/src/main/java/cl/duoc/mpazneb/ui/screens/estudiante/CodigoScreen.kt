@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.mpazneb.device.rememberVoz
+import cl.duoc.mpazneb.domain.validation.CodigoValidator
 import cl.duoc.mpazneb.ui.components.BotonEscuchar
 import cl.duoc.mpazneb.ui.components.TamanoVentana
 import cl.duoc.mpazneb.ui.components.rememberTamanoVentana
@@ -99,14 +101,21 @@ fun CodigoScreen(
                 "¡Hola! Escribe tu código",
                 style = TextoEstudiante.pregunta.copy(fontSize = if (compacta) 30.sp else 38.sp, lineHeight = if (compacta) 38.sp else 46.sp)
             )
-            Text("Son 4 números. Tu asistente te los muestra.", style = TextoEstudiante.instruccion, color = Grafito)
-            BotonEscuchar(onClick = { voz.hablar("Hola. Escribe tu código. Son cuatro números. Tu asistente te los muestra.") })
+            Text("Son ${CodigoValidator.LARGO} números. Tu asistente te los muestra.", style = TextoEstudiante.instruccion, color = Grafito)
+            BotonEscuchar(onClick = { voz.hablar("Hola. Escribe tu código. Son seis números. Tu asistente te los muestra.") })
             Row(
-                Modifier.offset { IntOffset(sacudida.value.roundToInt(), 0) },
-                horizontalArrangement = Arrangement.spacedBy(if (compacta) 10.dp else 14.dp)
+                Modifier
+                    .offset { IntOffset(sacudida.value.roundToInt(), 0) }
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(if (compacta) 6.dp else 12.dp)
             ) {
-                repeat(4) { i ->
-                    CasillaDigito(estado.codigo.getOrNull(i), activa = i == estado.codigo.length, conError = estado.mensaje != null, compacta = compacta)
+                repeat(CodigoValidator.LARGO) { i ->
+                    CasillaDigito(
+                        estado.codigo.getOrNull(i),
+                        activa = i == estado.codigo.length,
+                        conError = estado.mensaje != null,
+                        compacta = compacta
+                    )
                 }
             }
             AnimatedVisibility(visible = estado.mensaje != null, enter = scaleIn()) {
@@ -158,12 +167,12 @@ private fun CasillaDigito(digito: Char?, activa: Boolean, conError: Boolean, com
         }, label = "bordeCasilla"
     )
     Box(
-        Modifier.size(width = if (compacta) 60.dp else 76.dp, height = if (compacta) 76.dp else 96.dp)
+        Modifier.size(width = if (compacta) 40.dp else 64.dp, height = if (compacta) 56.dp else 88.dp)
             .background(Color.White, RoundedCornerShape(20.dp))
             .border(3.dp, borde, RoundedCornerShape(20.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Text(digito?.toString().orEmpty(), fontFamily = Andika, fontSize = if (compacta) 38.sp else 48.sp, color = TintaTexto)
+        Text(digito?.toString().orEmpty(), fontFamily = Andika, fontSize = if (compacta) 26.sp else 40.sp, color = TintaTexto)
     }
 }
 

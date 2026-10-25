@@ -2,7 +2,7 @@
 
 Aplicación Android para practicar Lectura y Matemática de 1.º a 4.º básico en la Escuela Escritora Marcela Paz. Es un MVP académico: usa personas y observaciones ficticias, no pone notas y no reemplaza al profesorado.
 
-## Integrantes 
+## Integrantes
 
 - Hanael Echeverría
 - Matías Soto
@@ -69,29 +69,24 @@ También se puede compilar en la terminal, dentro de la carpeta del proyecto:
 
 Pudú-12 ya tiene el código `482196` abierto. Para asignarle otra actividad hay que terminar esa o elegir otro estudiante, por ejemplo Chinchilla-05 en 1.º básico.
 
-   ## Galería y permisos
+## Galería y permisos
 
-   1. Entra como `utp.demo`, abre una actividad y pulsa **Elegir de la galería**.
-   2. La primera vez la app pide permiso para ver tus fotos. Hasta Android 12 es `READ_EXTERNAL_STORAGE`; desde Android 13, `READ_MEDIA_IMAGES`, y desde Android 14 se puede compartir solo algunas fotos.
-   3. Elige una foto JPG, PNG o WEBP de hasta 5 MB. La app la copia a su carpeta privada y la muestra con borde redondeado.
-   4. Guarda la actividad. La ilustración aparece en el catálogo y en la lectura del estudiante.
-   5. Si rechazas el permiso, la app explica cómo activarlo en Ajustes y no abre la galería.
+1. Entra como `utp.demo`, abre una actividad y pulsa **Elegir de la galería**.
+2. La primera vez la app pide permiso para ver tus fotos. Hasta Android 12 es `READ_EXTERNAL_STORAGE`; desde Android 13, `READ_MEDIA_IMAGES`, y desde Android 14 se puede compartir solo algunas fotos.
+3. Elige una foto JPG, PNG o WEBP de hasta 5 MB. La app la copia a su carpeta privada y la muestra con borde redondeado.
+4. Guarda la actividad. La ilustración aparece en el catálogo y en la lectura del estudiante.
+5. Si rechazas el permiso, la app explica cómo activarlo en Ajustes y no abre la galería.
 
 ## Limitaciones
 
 - No hay servidor. Lo que se guarda en una tablet no aparece en otra.
 - No hay RUT, diagnósticos, datos PIE ni calificaciones oficiales.
 - No usa cámara, micrófono, GPS, biometría ni contactos.
-- La semilla cubre una secuencia corta de Lectura y otra de Matemática, no todas las unidades del año.
-- La aceptación de “voz + archivo CSV” como los dos recursos nativos de la rúbrica debe confirmarla el docente. La vibración también está integrada.
+- La semilla trae 13 actividades de ejemplo de Lectura y Matemática de 1.º a 4.º básico, no todas las unidades del año.
 
-## Rama Git
+## Organización del trabajo
 
-El trabajo nuevo está en `hana`. `develop` y `main` no se modificaron. La rama no se publicó: en la semana 11 del segundo semestre 2026 la pauta sanciona con nota 1.0 los cambios remotos hechos después de la entrega y antes de la defensa. Si el docente autoriza la publicación:
-
-```powershell
-git checkout hana
-git push -u origin hana
-```
-
-No hagas push a `develop` ni a `main`.
+- Arquitectura y responsabilidades de cada capa: [ARQUITECTURA.md](ARQUITECTURA.md).
+- Casos de prueba: [CASOS_DE_PRUEBA.md](CASOS_DE_PRUEBA.md).
+- Ramas: `main` (versión entregada), `develop` (integración) y una rama por tarea, que entra a `develop` con pull request.
+- Planificación y reparto de tareas en Trello: https://trello.com/b/0EkPsNiH/mpaz-neb-dsy1105

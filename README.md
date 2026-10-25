@@ -16,11 +16,11 @@ Aplicación Android para practicar Lectura y Matemática de 1.º a 4.º básico 
 - Room
 - Navegación de Compose
 - DataStore para recordar la sesión del adulto
-- Recursos nativos: síntesis de voz, vibración y exportación CSV con el selector de archivos
+- Recursos nativos: galería con permiso de lectura de imágenes, síntesis de voz, vibración y exportación CSV con el selector de archivos.
 
 ## Qué puede hacer
 
-- Administración (`utp.demo`): ver, filtrar, crear, editar, activar y desactivar actividades y sus preguntas.
+- Administración (`utp.demo`): ver, filtrar, crear, editar, activar y desactivar actividades y sus preguntas, y agregarles una ilustración desde la galería.
 - Asistente (`asistente.aula2`): elegir módulo, curso y dificultad, asignar una actividad disponible, generar un código de 6 números, revisar resultados y anotar una observación ficticia.
 - Estudiante: entrar con el código, leer o escuchar, responder, confirmar, reintentar y ver un cierre sin nota.
 
@@ -68,6 +68,14 @@ También se puede compilar en la terminal, dentro de la carpeta del proyecto:
 6. Cierra la app y ábrela de nuevo. Las asignaciones siguen en la base.
 
 Pudú-12 ya tiene el código `482196` abierto. Para asignarle otra actividad hay que terminar esa o elegir otro estudiante, por ejemplo Chinchilla-05 en 1.º básico.
+
+   ## Galería y permisos
+
+   1. Entra como `utp.demo`, abre una actividad y pulsa **Elegir de la galería**.
+   2. La primera vez la app pide permiso para ver tus fotos. Hasta Android 12 es `READ_EXTERNAL_STORAGE`; desde Android 13, `READ_MEDIA_IMAGES`, y desde Android 14 se puede compartir solo algunas fotos.
+   3. Elige una foto JPG, PNG o WEBP de hasta 5 MB. La app la copia a su carpeta privada y la muestra con borde redondeado.
+   4. Guarda la actividad. La ilustración aparece en el catálogo y en la lectura del estudiante.
+   5. Si rechazas el permiso, la app explica cómo activarlo en Ajustes y no abre la galería.
 
 ## Limitaciones
 

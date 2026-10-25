@@ -20,7 +20,7 @@ import cl.duoc.mpazneb.model.TipoPregunta
  * Se inserta directamente en la base que se está creando (dentro de onCreate), de forma síncrona:
  * así ninguna consulta de la app puede llegar antes de que los datos estén cargados.
  */
-object Semilla {
+object  Semilla {
 
     fun poblar(db: SupportSQLiteDatabase) {
         usuario(db, "utp.demo", "Utp2026", Rol.ADMIN)
@@ -159,6 +159,45 @@ object Semilla {
         pregunta(db, recreo, 1, TipoPregunta.CALCULO, "¿Cuánto es 8 + 4?",
             listOf("12", "4", "84"), 0, "¡Muy bien! 8 + 4 = 12.", "Suma las unidades.",
             8, 4, "+", "8 + 4 = 12")
+
+        // ---------- Lectura: 2.° avanzada y 3.° intermedia ----------
+        val carta = actividad(
+            db, "Carta a la abuela", Modulo.LECTURA, 2, "Propósito del texto",
+            "Reconocer para qué se escribe una carta y deducir palabras por el contexto.", 3,
+            "Lee la carta de Sofía y responde 3 preguntas.", 2, EstadoActividad.DISPONIBLE,
+            "Carta a la abuela",
+            "Querida abuela Rosa: te escribo desde Valparaíso. Ayer subimos al cerro en ascensor y desde arriba " +
+                    "vimos el mar lleno de barcos. Mi hermano Lucas se asustó un poco, pero después se rio. " +
+                    "Te extraño mucho. ¿Me enseñas a hacer sopaipillas cuando vuelva a Talca? Un abrazo grande, Sofía."
+        )
+        pregunta(db, carta, 1, TipoPregunta.IMPLICITA, "¿Para qué escribió Sofía esta carta?",
+            listOf("Para contarle su viaje a la abuela", "Para vender sopaipillas", "Para explicar cómo funciona un ascensor"), 0,
+            "¡Muy bien! Sofía le cuenta a su abuela lo que hizo en el viaje.", "Piensa en a quién le escribe y qué le cuenta.")
+        pregunta(db, carta, 2, TipoPregunta.EXPLICITA, "¿Cómo subieron al cerro?",
+            listOf("En ascensor", "En bicicleta", "Caminando"), 0,
+            "¡Muy bien! La carta dice que subieron en ascensor.", "Busca la oración que habla del cerro.")
+        pregunta(db, carta, 3, TipoPregunta.VOCABULARIO, "En la carta, “te extraño” quiere decir…",
+            listOf("Te echo de menos", "Me das miedo", "Eres muy rara"), 0,
+            "¡Muy bien! Sofía echa de menos a su abuela.", "¿Qué siente Sofía por su abuela que está lejos?")
+
+        val huerta = actividad(
+            db, "La huerta de la escuela", Modulo.LECTURA, 3, "Inferencias",
+            "Inferir causas y consecuencias en un texto narrativo breve.", 2,
+            "Lee el texto y responde 3 preguntas.", 2, EstadoActividad.DISPONIBLE,
+            "La huerta de la escuela",
+            "En marzo, el 3.° B sembró lechugas en la huerta de la escuela. Cada curso regaba un día distinto. " +
+                    "Una semana hizo mucho calor y nadie fue a regar el viernes. El lunes, las hojas estaban caídas y amarillas. " +
+                    "Desde ese día, Joaquín pegó un calendario en la puerta de la sala para que nadie olvidara su turno."
+        )
+        pregunta(db, huerta, 1, TipoPregunta.EXPLICITA, "¿Qué sembró el 3.° B?",
+            listOf("Lechugas", "Tomates", "Papas"), 0,
+            "¡Muy bien! El texto dice que sembraron lechugas.", "Lee la primera oración.")
+        pregunta(db, huerta, 2, TipoPregunta.IMPLICITA, "¿Por qué las hojas estaban amarillas el lunes?",
+            listOf("Porque nadie las regó con el calor", "Porque llovió mucho", "Porque eran de otro curso"), 0,
+            "¡Muy bien! Hizo calor y nadie regó el viernes.", "¿Qué pasó el viernes de esa semana?")
+        pregunta(db, huerta, 3, TipoPregunta.IMPLICITA, "¿Para qué pegó Joaquín el calendario?",
+            listOf("Para que nadie olvidara regar", "Para decorar la sala", "Para anotar los cumpleaños"), 0,
+            "¡Muy bien! El calendario recuerda a quién le toca regar.", "Lee la última oración.")
 
         // ---------- Una sesión ya finalizada para ver Resultados ----------
         val ahora = System.currentTimeMillis()

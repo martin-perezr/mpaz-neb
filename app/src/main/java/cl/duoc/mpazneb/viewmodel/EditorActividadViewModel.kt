@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import android.net.Uri
+import cl.duoc.mpazneb.device.AlmacenImagenes
 
 data class EditorActividadUiState(
     val cargando: Boolean = true,
@@ -35,6 +37,8 @@ data class EditorActividadUiState(
     val intentos: String = "2",
     val textoTitulo: String = "",
     val textoCuerpo: String = "",
+    val imagenRuta: String? = null,
+    val copiandoImagen: Boolean = false,
     val estado: EstadoActividad = EstadoActividad.BORRADOR,
     val preguntas: List<PreguntaConAlternativas> = emptyList(),
     val intentoGuardar: Boolean = false,
@@ -52,10 +56,12 @@ data class EditorActividadUiState(
 class EditorActividadViewModel(
     private val actividadIdInicial: Long,
     private val auth: AuthRepository,
-    private val actividades: ActividadRepository
+    private val actividades: ActividadRepository,
+    private val almacenImagenes: AlmacenImagenes
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(EditorActividadUiState(id = actividadIdInicial))
+    private var imagenOriginalRuta: String? = null
     val estado: StateFlow<EditorActividadUiState> = _estado.asStateFlow()
 
     init {
@@ -70,12 +76,21 @@ class EditorActividadViewModel(
                 return@launch
             }
             val actividad = actividades.obtener(actividadIdInicial)
+
             if (actividad == null) {
                 _estado.update {
-                    it.copy(cargando = false, mensaje = "No se encontró la actividad", mensajeEsError = true)
+                    it.copy(
+                        cargando = false,
+                        mensaje = "No se encontró la actividad",
+                        mensajeEsError = true
+                    )
                 }
                 return@launch
             }
+
+            // La actividad existe: ahora podemos leer su ruta de imagen.
+            imagenOriginalRuta = actividad.imagenRuta
+
             _estado.update {
                 it.copy(
                     cargando = false,
@@ -90,15 +105,54 @@ class EditorActividadViewModel(
                     intentos = actividad.intentosPermitidos.toString(),
                     textoTitulo = actividad.textoTitulo.orEmpty(),
                     textoCuerpo = actividad.textoCuerpo.orEmpty(),
-                    estado = actividad.estado
+                    estado = actividad.estado,
+                    imagenRuta = actividad.imagenRuta
                 )
             }
+
             actividades.preguntasDe(actividad.id).collect { preguntas ->
                 _estado.update { it.copy(preguntas = preguntas) }
             }
         }
     }
 
+    fun seleccionarImagen(uri: Uri) {
+        viewModelScope.launch {
+            _estado.update {
+                it.copy(copiandoImagen = true, mensaje = null)
+            }
+
+            val nuevaRuta = almacenImagenes.copiarAInterno(uri)
+
+            if (nuevaRuta == null) {
+                _estado.update {
+                    it.copy(
+                        copiandoImagen = false,
+                        mensaje = "No se pudo guardar la imagen seleccionada.",
+                        mensajeEsError = true
+                    )
+                }
+                return@launch
+            }
+
+            val rutaAnterior = _estado.value.imagenRuta
+
+            _estado.update {
+                it.copy(
+                    imagenRuta = nuevaRuta,
+                    copiandoImagen = false,
+                    mensaje = "Imagen cargada. Guarda la actividad para conservarla.",
+                    mensajeEsError = false
+                )
+            }
+
+            // Borra solo una imagen provisional reemplazada.
+            // La imagen original se conserva hasta guardar correctamente.
+            if (rutaAnterior != imagenOriginalRuta) {
+                almacenImagenes.borrar(rutaAnterior)
+            }
+        }
+    }
     fun cambiarNombre(valor: String) = _estado.update { it.copy(nombre = valor, mensaje = null) }
     fun cambiarContenido(valor: String) = _estado.update { it.copy(contenido = valor, mensaje = null) }
     fun cambiarObjetivo(valor: String) = _estado.update { it.copy(objetivo = valor, mensaje = null) }
@@ -147,12 +201,17 @@ class EditorActividadViewModel(
             intentosPermitidos = actual.intentos.toInt(),
             estado = actual.estado,
             textoTitulo = if (esLectura) actual.textoTitulo.trim().ifBlank { null } else null,
-            textoCuerpo = if (esLectura) actual.textoCuerpo.trim().ifBlank { null } else null
+            textoCuerpo = if (esLectura) actual.textoCuerpo.trim().ifBlank { null } else null,
+            imagenRuta = actual.imagenRuta
         )
         viewModelScope.launch {
             when (val resultado = actividades.guardar(actividad)) {
                 is ResultadoAccion.Exito -> {
                     val eraNueva = actual.id == 0L
+                    if (imagenOriginalRuta != actual.imagenRuta) {
+                        almacenImagenes.borrar(imagenOriginalRuta)
+                        imagenOriginalRuta = actual.imagenRuta
+                    }
                     _estado.update {
                         it.copy(
                             id = resultado.id,
@@ -188,7 +247,12 @@ class EditorActividadViewModel(
         fun factory(actividadId: Long) = viewModelFactory {
             initializer {
                 val contenedor = contenedor()
-                EditorActividadViewModel(actividadId, contenedor.authRepository, contenedor.actividadRepository)
+                EditorActividadViewModel(
+                    actividadId,
+                    contenedor.authRepository,
+                    contenedor.actividadRepository,
+                    contenedor.almacenImagenes
+                )
             }
         }
     }

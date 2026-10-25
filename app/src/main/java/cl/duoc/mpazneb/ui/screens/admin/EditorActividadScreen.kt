@@ -37,6 +37,15 @@ import cl.duoc.mpazneb.ui.components.rememberTamanoVentana
 import cl.duoc.mpazneb.ui.theme.Grafito
 import cl.duoc.mpazneb.ui.theme.coloresDe
 import cl.duoc.mpazneb.viewmodel.EditorActividadViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import java.io.File
 
 @Composable
 fun EditorActividadScreen(
@@ -49,6 +58,11 @@ fun EditorActividadScreen(
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     var preguntaABorrar by remember { mutableStateOf<Long?>(null) }
+    val selectorImagen = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let(vm::seleccionarImagen)
+    }
     LaunchedEffect(estado.sinPermiso) { if (estado.sinPermiso) onVolver() }
     LaunchedEffect(estado.navegarAId) {
         val id = estado.navegarAId ?: return@LaunchedEffect
@@ -64,6 +78,43 @@ fun EditorActividadScreen(
         val formulario = @Composable { mod: Modifier ->
             Column(mod, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Aviso(estado.mensaje, estado.mensajeEsError)
+                Text(
+                    "Ilustración de la actividad",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                estado.imagenRuta?.let { ruta ->
+                    AsyncImage(
+                        model = File(ruta),
+                        contentDescription = "Ilustración de la actividad",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                BotonPrincipal(
+                    texto = if (estado.imagenRuta == null) {
+                        "Seleccionar imagen"
+                    } else {
+                        "Cambiar imagen"
+                    },
+                    onClick = {
+                        selectorImagen.launch(
+                            PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !estado.copiandoImagen
+                )
+
+                if (estado.copiandoImagen) {
+                    Text("Guardando imagen...", color = Grafito)
+                }
                 CampoValidado(estado.nombre, vm::cambiarNombre, "Nombre", estado.errores.nombre, mostrarValido = estado.intentoGuardar)
                 SelectorChips(
                     "Módulo",

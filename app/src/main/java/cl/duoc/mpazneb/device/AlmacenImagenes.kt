@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
+import android.provider.OpenableColumns
 
 /**
  * La URI que entrega la galería es temporal. Copiamos la imagen a la carpeta privada
@@ -26,5 +27,16 @@ class AlmacenImagenes(private val context: Context) {
 
     fun borrar(ruta: String?) {
         if (ruta != null) runCatching { File(ruta).delete() }
+    }
+
+    // Tipo y tamaño de la imagen elegida, para validarla antes de copiarla.
+    suspend fun describir(uri: Uri): Pair<String?, Long?> = withContext(Dispatchers.IO) {
+        val tipo = context.contentResolver.getType(uri)
+        val bytes = runCatching {
+            context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
+                if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else null
+            }
+        }.getOrNull()
+        tipo to bytes
     }
 }

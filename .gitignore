@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Configuración local de Android Studio (cada integrante tiene la suya)
+/.idea/
+.kotlin/

@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import java.io.File
+import cl.duoc.mpazneb.ui.components.SelectorImagen
 
 @Composable
 fun EditorActividadScreen(
@@ -58,11 +59,6 @@ fun EditorActividadScreen(
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     var preguntaABorrar by remember { mutableStateOf<Long?>(null) }
-    val selectorImagen = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        uri?.let(vm::seleccionarImagen)
-    }
     LaunchedEffect(estado.sinPermiso) { if (estado.sinPermiso) onVolver() }
     LaunchedEffect(estado.navegarAId) {
         val id = estado.navegarAId ?: return@LaunchedEffect
@@ -82,39 +78,13 @@ fun EditorActividadScreen(
                     "Ilustración de la actividad",
                     style = MaterialTheme.typography.titleMedium
                 )
-
-                estado.imagenRuta?.let { ruta ->
-                    AsyncImage(
-                        model = File(ruta),
-                        contentDescription = "Ilustración de la actividad",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                BotonPrincipal(
-                    texto = if (estado.imagenRuta == null) {
-                        "Seleccionar imagen"
-                    } else {
-                        "Cambiar imagen"
-                    },
-                    onClick = {
-                        selectorImagen.launch(
-                            PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !estado.copiandoImagen
+                SelectorImagen(
+                    ruta = estado.imagenRuta,
+                    error = estado.errorImagen,
+                    onElegida = vm::elegirImagen,
+                    onQuitar = vm::quitarImagen,
+                    modifier = Modifier.fillMaxWidth()
                 )
-
-                if (estado.copiandoImagen) {
-                    Text("Guardando imagen...", color = Grafito)
-                }
                 CampoValidado(estado.nombre, vm::cambiarNombre, "Nombre", estado.errores.nombre, mostrarValido = estado.intentoGuardar)
                 SelectorChips(
                     "Módulo",

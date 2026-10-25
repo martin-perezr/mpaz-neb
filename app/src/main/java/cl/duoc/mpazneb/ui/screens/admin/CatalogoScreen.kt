@@ -40,6 +40,12 @@ import cl.duoc.mpazneb.utils.etiquetaCurso
 import cl.duoc.mpazneb.utils.etiquetaDificultad
 import cl.duoc.mpazneb.viewmodel.CatalogoUiState
 import cl.duoc.mpazneb.viewmodel.CatalogoViewModel
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import java.io.File
 
 @Composable
 fun CatalogoScreen(
@@ -148,6 +154,14 @@ private fun ListaCatalogo(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         ChipEstado(actividad.modulo.etiqueta, coloresModulo.fondo, coloresModulo.texto)
                         ChipEstado(actividad.estado.etiqueta, coloresEstado.first, coloresEstado.second)
+                    }
+                    actividad.imagenRuta?.let { ruta ->
+                        AsyncImage(
+                            model = File(ruta),
+                            contentDescription = "Ilustración de ${actividad.nombre}",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(16.dp))
+                        )
                     }
                     Text(actividad.nombre, style = MaterialTheme.typography.titleLarge)
                     Text(

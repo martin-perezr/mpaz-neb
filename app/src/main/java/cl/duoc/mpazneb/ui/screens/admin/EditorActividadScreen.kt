@@ -37,6 +37,16 @@ import cl.duoc.mpazneb.ui.components.rememberTamanoVentana
 import cl.duoc.mpazneb.ui.theme.Grafito
 import cl.duoc.mpazneb.ui.theme.coloresDe
 import cl.duoc.mpazneb.viewmodel.EditorActividadViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import java.io.File
+import cl.duoc.mpazneb.ui.components.SelectorImagen
 
 @Composable
 fun EditorActividadScreen(
@@ -64,6 +74,17 @@ fun EditorActividadScreen(
         val formulario = @Composable { mod: Modifier ->
             Column(mod, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Aviso(estado.mensaje, estado.mensajeEsError)
+                Text(
+                    "Ilustración de la actividad",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                SelectorImagen(
+                    ruta = estado.imagenRuta,
+                    error = estado.errorImagen,
+                    onElegida = vm::elegirImagen,
+                    onQuitar = vm::quitarImagen,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 CampoValidado(estado.nombre, vm::cambiarNombre, "Nombre", estado.errores.nombre, mostrarValido = estado.intentoGuardar)
                 SelectorChips(
                     "Módulo",

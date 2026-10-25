@@ -20,7 +20,7 @@ import cl.duoc.mpazneb.model.TipoPregunta
  * Se inserta directamente en la base que se está creando (dentro de onCreate), de forma síncrona:
  * así ninguna consulta de la app puede llegar antes de que los datos estén cargados.
  */
-object Semilla {
+object  Semilla {
 
     fun poblar(db: SupportSQLiteDatabase) {
         usuario(db, "utp.demo", "Utp2026", Rol.ADMIN)
@@ -159,6 +159,77 @@ object Semilla {
         pregunta(db, recreo, 1, TipoPregunta.CALCULO, "¿Cuánto es 8 + 4?",
             listOf("12", "4", "84"), 0, "¡Muy bien! 8 + 4 = 12.", "Suma las unidades.",
             8, 4, "+", "8 + 4 = 12")
+
+        // ---------- Lectura: 2.° avanzada y 3.° intermedia ----------
+        val carta = actividad(
+            db, "Carta a la abuela", Modulo.LECTURA, 2, "Propósito del texto",
+            "Reconocer para qué se escribe una carta y deducir palabras por el contexto.", 3,
+            "Lee la carta de Sofía y responde 3 preguntas.", 2, EstadoActividad.DISPONIBLE,
+            "Carta a la abuela",
+            "Querida abuela Rosa: te escribo desde Valparaíso. Ayer subimos al cerro en ascensor y desde arriba " +
+                    "vimos el mar lleno de barcos. Mi hermano Lucas se asustó un poco, pero después se rio. " +
+                    "Te extraño mucho. ¿Me enseñas a hacer sopaipillas cuando vuelva a Talca? Un abrazo grande, Sofía."
+        )
+        pregunta(db, carta, 1, TipoPregunta.IMPLICITA, "¿Para qué escribió Sofía esta carta?",
+            listOf("Para contarle su viaje a la abuela", "Para vender sopaipillas", "Para explicar cómo funciona un ascensor"), 0,
+            "¡Muy bien! Sofía le cuenta a su abuela lo que hizo en el viaje.", "Piensa en a quién le escribe y qué le cuenta.")
+        pregunta(db, carta, 2, TipoPregunta.EXPLICITA, "¿Cómo subieron al cerro?",
+            listOf("En ascensor", "En bicicleta", "Caminando"), 0,
+            "¡Muy bien! La carta dice que subieron en ascensor.", "Busca la oración que habla del cerro.")
+        pregunta(db, carta, 3, TipoPregunta.VOCABULARIO, "En la carta, “te extraño” quiere decir…",
+            listOf("Te echo de menos", "Me das miedo", "Eres muy rara"), 0,
+            "¡Muy bien! Sofía echa de menos a su abuela.", "¿Qué siente Sofía por su abuela que está lejos?")
+
+        val huerta = actividad(
+            db, "La huerta de la escuela", Modulo.LECTURA, 3, "Inferencias",
+            "Inferir causas y consecuencias en un texto narrativo breve.", 2,
+            "Lee el texto y responde 3 preguntas.", 2, EstadoActividad.DISPONIBLE,
+            "La huerta de la escuela",
+            "En marzo, el 3.° B sembró lechugas en la huerta de la escuela. Cada curso regaba un día distinto. " +
+                    "Una semana hizo mucho calor y nadie fue a regar el viernes. El lunes, las hojas estaban caídas y amarillas. " +
+                    "Desde ese día, Joaquín pegó un calendario en la puerta de la sala para que nadie olvidara su turno."
+        )
+        pregunta(db, huerta, 1, TipoPregunta.EXPLICITA, "¿Qué sembró el 3.° B?",
+            listOf("Lechugas", "Tomates", "Papas"), 0,
+            "¡Muy bien! El texto dice que sembraron lechugas.", "Lee la primera oración.")
+        pregunta(db, huerta, 2, TipoPregunta.IMPLICITA, "¿Por qué las hojas estaban amarillas el lunes?",
+            listOf("Porque nadie las regó con el calor", "Porque llovió mucho", "Porque eran de otro curso"), 0,
+            "¡Muy bien! Hizo calor y nadie regó el viernes.", "¿Qué pasó el viernes de esa semana?")
+        pregunta(db, huerta, 3, TipoPregunta.IMPLICITA, "¿Para qué pegó Joaquín el calendario?",
+            listOf("Para que nadie olvidara regar", "Para decorar la sala", "Para anotar los cumpleaños"), 0,
+            "¡Muy bien! El calendario recuerda a quién le toca regar.", "Lee la última oración.")
+
+        // ---------- Matemática: 2.° avanzada y 4.° intermedia ----------
+        val kiosco = actividad(
+            db, "El kiosco del colegio", Modulo.MATEMATICA, 2, "Problemas de dos pasos",
+            "Resolver problemas de adición y sustracción de dos pasos con dinero.", 3,
+            "Lee cada problema del kiosco y elige el resultado.", 2, EstadoActividad.DISPONIBLE
+        )
+        pregunta(db, kiosco, 1, TipoPregunta.PROBLEMA,
+            "Ana tiene $50. Compra un jugo de $20 y un pan de $10. ¿Cuánto dinero le queda?",
+            listOf("$20", "$30", "$80"), 0, "¡Muy bien! 20 + 10 = 30 y 50 − 30 = 20.",
+            "Primero suma lo que gastó y después réstalo de 50.", 50, 30, "−", "20 + 10 = 30; 50 − 30 = 20")
+        pregunta(db, kiosco, 2, TipoPregunta.PROBLEMA, "Tomás compra un lápiz de $35 y una goma de $25. ¿Cuánto paga?",
+            listOf("$60", "$10", "$50"), 0, "¡Muy bien! 35 + 25 = 60.",
+            "Suma las unidades: 5 + 5 = 10. ¡Eso forma una decena más!", 35, 25, "+", "5 + 5 = 10; 30 + 20 + 10 = 60")
+        pregunta(db, kiosco, 3, TipoPregunta.CALCULO, "¿Cuánto es 70 − 45?",
+            listOf("25", "35", "115"), 0, "¡Muy bien! 70 − 45 = 25.", "Quita primero 40 y después 5.",
+            70, 45, "−", "70 − 40 = 30; 30 − 5 = 25")
+
+        val micro = actividad(
+            db, "El viaje en micro", Modulo.MATEMATICA, 4, "Multiplicación y problemas hasta 1.000",
+            "Resolver problemas de multiplicación y adición con números hasta 1.000.", 2,
+            "Lee cada problema del viaje y elige el resultado.", 2, EstadoActividad.DISPONIBLE
+        )
+        pregunta(db, micro, 1, TipoPregunta.PROBLEMA, "Una micro tiene 6 filas con 4 asientos cada una. ¿Cuántos asientos hay?",
+            listOf("24", "10", "20"), 0, "¡Muy bien! 6 × 4 = 24.", "Son 6 grupos de 4: suma 4 seis veces.",
+            6, 4, "×", "6 × 4 = 24")
+        pregunta(db, micro, 2, TipoPregunta.PROBLEMA, "El viaje de ida dura 125 minutos y el de vuelta, 125 minutos. ¿Cuántos minutos son en total?",
+            listOf("250", "225", "350"), 0, "¡Muy bien! 125 + 125 = 250.", "Suma centenas, decenas y unidades por separado.",
+            125, 125, "+", "100 + 100 = 200; 20 + 20 = 40; 5 + 5 = 10; 200 + 40 + 10 = 250")
+        pregunta(db, micro, 3, TipoPregunta.CALCULO, "¿Cuánto es 8 × 7?",
+            listOf("56", "15", "54"), 0, "¡Muy bien! 8 × 7 = 56.", "Puedes pensar en 8 × 5 = 40 y sumar 8 × 2 = 16.",
+            8, 7, "×", "8 × 5 = 40; 8 × 2 = 16; 40 + 16 = 56")
 
         // ---------- Una sesión ya finalizada para ver Resultados ----------
         val ahora = System.currentTimeMillis()

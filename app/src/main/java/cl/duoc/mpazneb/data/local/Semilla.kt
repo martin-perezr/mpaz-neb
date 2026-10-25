@@ -199,6 +199,38 @@ object  Semilla {
             listOf("Para que nadie olvidara regar", "Para decorar la sala", "Para anotar los cumpleaños"), 0,
             "¡Muy bien! El calendario recuerda a quién le toca regar.", "Lee la última oración.")
 
+        // ---------- Matemática: 2.° avanzada y 4.° intermedia ----------
+        val kiosco = actividad(
+            db, "El kiosco del colegio", Modulo.MATEMATICA, 2, "Problemas de dos pasos",
+            "Resolver problemas de adición y sustracción de dos pasos con dinero.", 3,
+            "Lee cada problema del kiosco y elige el resultado.", 2, EstadoActividad.DISPONIBLE
+        )
+        pregunta(db, kiosco, 1, TipoPregunta.PROBLEMA,
+            "Ana tiene $50. Compra un jugo de $20 y un pan de $10. ¿Cuánto dinero le queda?",
+            listOf("$20", "$30", "$80"), 0, "¡Muy bien! 20 + 10 = 30 y 50 − 30 = 20.",
+            "Primero suma lo que gastó y después réstalo de 50.", 50, 30, "−", "20 + 10 = 30; 50 − 30 = 20")
+        pregunta(db, kiosco, 2, TipoPregunta.PROBLEMA, "Tomás compra un lápiz de $35 y una goma de $25. ¿Cuánto paga?",
+            listOf("$60", "$10", "$50"), 0, "¡Muy bien! 35 + 25 = 60.",
+            "Suma las unidades: 5 + 5 = 10. ¡Eso forma una decena más!", 35, 25, "+", "5 + 5 = 10; 30 + 20 + 10 = 60")
+        pregunta(db, kiosco, 3, TipoPregunta.CALCULO, "¿Cuánto es 70 − 45?",
+            listOf("25", "35", "115"), 0, "¡Muy bien! 70 − 45 = 25.", "Quita primero 40 y después 5.",
+            70, 45, "−", "70 − 40 = 30; 30 − 5 = 25")
+
+        val micro = actividad(
+            db, "El viaje en micro", Modulo.MATEMATICA, 4, "Multiplicación y problemas hasta 1.000",
+            "Resolver problemas de multiplicación y adición con números hasta 1.000.", 2,
+            "Lee cada problema del viaje y elige el resultado.", 2, EstadoActividad.DISPONIBLE
+        )
+        pregunta(db, micro, 1, TipoPregunta.PROBLEMA, "Una micro tiene 6 filas con 4 asientos cada una. ¿Cuántos asientos hay?",
+            listOf("24", "10", "20"), 0, "¡Muy bien! 6 × 4 = 24.", "Son 6 grupos de 4: suma 4 seis veces.",
+            6, 4, "×", "6 × 4 = 24")
+        pregunta(db, micro, 2, TipoPregunta.PROBLEMA, "El viaje de ida dura 125 minutos y el de vuelta, 125 minutos. ¿Cuántos minutos son en total?",
+            listOf("250", "225", "350"), 0, "¡Muy bien! 125 + 125 = 250.", "Suma centenas, decenas y unidades por separado.",
+            125, 125, "+", "100 + 100 = 200; 20 + 20 = 40; 5 + 5 = 10; 200 + 40 + 10 = 250")
+        pregunta(db, micro, 3, TipoPregunta.CALCULO, "¿Cuánto es 8 × 7?",
+            listOf("56", "15", "54"), 0, "¡Muy bien! 8 × 7 = 56.", "Puedes pensar en 8 × 5 = 40 y sumar 8 × 2 = 16.",
+            8, 7, "×", "8 × 5 = 40; 8 × 2 = 16; 40 + 16 = 56")
+
         // ---------- Una sesión ya finalizada para ver Resultados ----------
         val ahora = System.currentTimeMillis()
         val finalizada = db.insertar(

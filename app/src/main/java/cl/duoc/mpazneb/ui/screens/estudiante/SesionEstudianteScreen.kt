@@ -325,7 +325,10 @@ private fun ContenidoPregunta(
                     voz.hablar(pregunta.enunciado + ". " + estado.alternativas.joinToString(". ") { it.texto })
                 }, texto = "")
             }
-            if (actividad.modulo == Modulo.MATEMATICA && pregunta.numeroA != null && pregunta.numeroB != null) {
+            // Los bloques representan decenas y unidades: con números de 100 o más se muestra solo el enunciado
+            if (actividad.modulo == Modulo.MATEMATICA && pregunta.numeroA != null && pregunta.numeroB != null &&
+                pregunta.numeroA < 100 && pregunta.numeroB < 100
+            ) {
                 BloquesDecenas(
                     pregunta.numeroA, pregunta.numeroB, pregunta.operacion ?: "+",
                     Modifier.horizontalScroll(rememberScrollState()).background(Menta, RoundedCornerShape(20.dp)).padding(4.dp)

@@ -42,7 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "mpazneb.db"
                 )
                     .addCallback(SemillaCallback())
-                    // MVP académico: si cambia el esquema se recrea la base con la semilla
+                    // MVP académico: si cambia el esquema se recrea la base; SemillaCallback vuelve a cargar los datos
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                     .also { instancia = it }
@@ -50,13 +50,23 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
     /**
-     * Al crear la base por primera vez se cargan los datos ficticios en la misma transacción,
-     * antes de que la app pueda hacer cualquier consulta.
+     * Carga los datos ficticios cada vez que la base se abre vacía: al crearla por primera vez
+     * y también cuando se recrea por subir [version] (fallbackToDestructiveMigration borra las
+     * tablas, pero Room no vuelve a llamar a onCreate). Es síncrono, así que ninguna consulta
+     * de la app llega antes que los datos.
      */
     private class SemillaCallback : Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            super.onCreate(db)
-            Semilla.poblar(db)
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            val usuarios = db.query("SELECT COUNT(*) FROM usuarios").use { c -> c.moveToFirst(); c.getInt(0) }
+            if (usuarios > 0) return
+            db.beginTransaction()
+            try {
+                Semilla.poblar(db)
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
         }
     }
 }

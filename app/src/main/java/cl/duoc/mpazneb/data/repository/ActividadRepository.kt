@@ -12,11 +12,13 @@ import cl.duoc.mpazneb.model.PreguntaConAlternativas
 import cl.duoc.mpazneb.model.Rol
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import cl.duoc.mpazneb.data.remote.ApiService
 
-/** Única puerta de entrada a las actividades: los ViewModel nunca usan el DAO directamente. */
+
 class ActividadRepository(
     private val dao: ActividadDao,
-    private val auth: AuthRepository
+    private val auth: AuthRepository,
+    private val apiService: ApiService
 ) {
 
     fun catalogo(): Flow<List<ActividadConConteo>> = dao.catalogo()

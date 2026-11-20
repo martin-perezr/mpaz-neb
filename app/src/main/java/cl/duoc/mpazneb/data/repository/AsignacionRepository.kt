@@ -14,6 +14,7 @@ import cl.duoc.mpazneb.model.Rol
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlin.random.Random
+import cl.duoc.mpazneb.data.remote.ApiService
 
 sealed interface ResultadoCodigo {
     data class Valido(val asignacion: Asignacion) : ResultadoCodigo
@@ -22,11 +23,7 @@ sealed interface ResultadoCodigo {
     data object YaUsado : ResultadoCodigo
 }
 
-/**
- * Decide si un código deja entrar.
- * Primero mira si existe, después si la actividad ya terminó, después si venció.
- * Una asignación en desarrollo y vigente se puede retomar.
- */
+
 fun clasificarCodigo(asignacion: Asignacion?, ahora: Long): ResultadoCodigo {
     if (asignacion == null) return ResultadoCodigo.NoExiste
     if (asignacion.estado == EstadoAsignacion.FINALIZADA) return ResultadoCodigo.YaUsado
@@ -38,6 +35,7 @@ class AsignacionRepository(
     private val dao: AsignacionDao,
     private val actividades: ActividadDao,
     private val auth: AuthRepository,
+    private val apiService: ApiService,
     private val reloj: () -> Long = System::currentTimeMillis
 ) {
     companion object {

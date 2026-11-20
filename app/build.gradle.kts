@@ -26,6 +26,9 @@ android {
                 enable = false
             }
         }
+        debug {
+            enableUnitTestCoverage = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

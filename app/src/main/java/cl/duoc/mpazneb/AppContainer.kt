@@ -9,18 +9,24 @@ import cl.duoc.mpazneb.data.repository.AsignacionRepository
 import cl.duoc.mpazneb.data.repository.AuthRepository
 import cl.duoc.mpazneb.data.sesion.SessionManager
 import cl.duoc.mpazneb.device.AlmacenImagenes
+import cl.duoc.mpazneb.data.remote.RetrofitClient
+import cl.duoc.mpazneb.data.remote.openlibrary.OpenLibraryClient
+import cl.duoc.mpazneb.data.repository.OpenLibraryRepository
 
-/**
- * Inyección de dependencias manual: aquí se crean una sola vez la base de datos
- * y los repositorios, y los ViewModel los piden desde su Factory.
- */
 class AppContainer(context: Context) {
     private val db = AppDatabase.obtener(context)
     private val sesion = SessionManager(context)
+    val apiService = RetrofitClient.api
+
+    val openLibraryRepository = OpenLibraryRepository(OpenLibraryClient.servicio)
 
     val authRepository = AuthRepository(db.usuarioDao(), sesion)
-    val actividadRepository = ActividadRepository(db.actividadDao(), authRepository)
-    val asignacionRepository = AsignacionRepository(db.asignacionDao(), db.actividadDao(), authRepository)
+    val actividadRepository = ActividadRepository(
+        db.actividadDao(), authRepository, apiService
+    )
+    val asignacionRepository = AsignacionRepository(
+        db.asignacionDao(), db.actividadDao(), authRepository, apiService
+    )
     val almacenImagenes = AlmacenImagenes(context)
 }
 

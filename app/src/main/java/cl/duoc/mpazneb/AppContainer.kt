@@ -10,11 +10,15 @@ import cl.duoc.mpazneb.data.repository.AuthRepository
 import cl.duoc.mpazneb.data.sesion.SessionManager
 import cl.duoc.mpazneb.device.AlmacenImagenes
 import cl.duoc.mpazneb.data.remote.RetrofitClient
+import cl.duoc.mpazneb.data.remote.openlibrary.OpenLibraryClient
+import cl.duoc.mpazneb.data.repository.OpenLibraryRepository
 
 class AppContainer(context: Context) {
     private val db = AppDatabase.obtener(context)
     private val sesion = SessionManager(context)
     val apiService = RetrofitClient.api
+
+    val openLibraryRepository = OpenLibraryRepository(OpenLibraryClient.servicio)
 
     val authRepository = AuthRepository(db.usuarioDao(), sesion)
     val actividadRepository = ActividadRepository(

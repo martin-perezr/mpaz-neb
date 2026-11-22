@@ -1,6 +1,9 @@
 package cl.duoc.mpazneb.data.repository
 
 import cl.duoc.mpazneb.data.local.ActividadDao
+import cl.duoc.mpazneb.data.remote.ApiService
+import cl.duoc.mpazneb.data.remote.dto.ActividadDto
+import cl.duoc.mpazneb.data.remote.dto.ActividadRequest
 import cl.duoc.mpazneb.model.Actividad
 import cl.duoc.mpazneb.model.ActividadConConteo
 import cl.duoc.mpazneb.model.ActividadConPreguntas
@@ -10,20 +13,20 @@ import cl.duoc.mpazneb.model.Modulo
 import cl.duoc.mpazneb.model.Pregunta
 import cl.duoc.mpazneb.model.PreguntaConAlternativas
 import cl.duoc.mpazneb.model.Rol
+import com.google.gson.JsonParser
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import cl.duoc.mpazneb.data.remote.ApiService
-import cl.duoc.mpazneb.data.remote.dto.ActividadDto
-import kotlinx.coroutines.CancellationException
-import cl.duoc.mpazneb.data.remote.dto.ActividadRequest
-import com.google.gson.JsonParser
 
-
-class ActividadRepository(
+/** Única puerta de entrada a las actividades: los ViewModel nunca usan el DAO directamente. */
+class ActividadRepository internal constructor(
     private val dao: ActividadDao,
-    private val auth: AuthRepository,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val esAdmin: suspend () -> Boolean
 ) {
+    /** Constructor que usa la app: el rol sale de la sesión guardada. */
+    constructor(dao: ActividadDao, auth: AuthRepository, apiService: ApiService) :
+            this(dao, apiService, { auth.sesionActual.first()?.rol == Rol.ADMIN })
 
     fun catalogo(): Flow<List<ActividadConConteo>> = dao.catalogo()
 
@@ -54,32 +57,6 @@ class ActividadRepository(
         return ResultadoAccion.Exito()
     }
 
-    companion object {
-        /** Los ids hasta este valor son de la semilla local; el servidor numera desde 1001. */
-        const val ID_BASE_SERVIDOR = 1000L
-
-        /** Ids de la semilla que también existen en el servidor por acuerdo con Hanael. */
-        val IDS_COMPARTIDOS: Set<Long> = emptySet()
-
-        /** Un id remoto que cae sobre una fila local distinta no debe pisar los datos locales. */
-        fun esConflictoDeId(idRemoto: Long, idsLocales: Set<Long>): Boolean =
-            idRemoto in idsLocales && idRemoto <= ID_BASE_SERVIDOR && idRemoto !in IDS_COMPARTIDOS
-
-        /** Nuevas (id 0), con id del servidor, o compartidas por acuerdo: estas viajan al servidor. */
-        fun esRemota(id: Long): Boolean =
-            id == 0L || id > ID_BASE_SERVIDOR || id in IDS_COMPARTIDOS
-
-        /** Lee {"error":"..."} de la respuesta del servidor; si no viene, usa un mensaje genérico. */
-        fun mensajeDeError(cuerpo: String?, codigo: Int): String {
-            val delServidor = try {
-                JsonParser.parseString(cuerpo).asJsonObject.get("error")?.asString
-            } catch (e: Exception) {
-                null
-            }
-            return delServidor ?: "El servidor rechazó el guardado (código $codigo)."
-        }
-    }
-
     fun disponibles(modulo: Modulo, curso: Int, dificultad: Int): Flow<List<Actividad>> =
         dao.disponibles(modulo, curso, dificultad)
 
@@ -94,7 +71,6 @@ class ActividadRepository(
 
     suspend fun contarPreguntas(actividadId: Long): Int = dao.contarPreguntas(actividadId)
 
-    /** Inserta si es nueva (id = 0) o actualiza si ya existe. Solo administración. */
     /** Crea (POST) o edita (PUT) en el servidor y deja en Room lo que este confirma. Solo administración. */
     suspend fun guardar(actividad: Actividad): ResultadoAccion {
         val prohibido = exigirAdmin()
@@ -175,8 +151,7 @@ class ActividadRepository(
 
     /** Regla de negocio: solo administración modifica actividades. */
     private suspend fun exigirAdmin(): String? {
-        val sesion = auth.sesionActual.first()
-        if (sesion?.rol == Rol.ADMIN) return null
+        if (esAdmin()) return null
         return "Solo la administración pedagógica puede modificar actividades."
     }
 
@@ -207,24 +182,52 @@ class ActividadRepository(
         dao.upsertActividades(listOf(entidad))
         return ResultadoAccion.Exito(id = dto.id)
     }
+
+    companion object {
+        /** Los ids hasta este valor son de la semilla local; el servidor numera desde 1001. */
+        const val ID_BASE_SERVIDOR = 1000L
+
+        /** Ids de la semilla que también existen en el servidor por acuerdo con Hanael. */
+        val IDS_COMPARTIDOS: Set<Long> = emptySet()
+
+        /** Un id remoto que cae sobre una fila local distinta no debe pisar los datos locales. */
+        fun esConflictoDeId(idRemoto: Long, idsLocales: Set<Long>): Boolean =
+            idRemoto in idsLocales && idRemoto <= ID_BASE_SERVIDOR && idRemoto !in IDS_COMPARTIDOS
+
+        /** Nuevas (id 0), con id del servidor, o compartidas por acuerdo: estas viajan al servidor. */
+        fun esRemota(id: Long): Boolean =
+            id == 0L || id > ID_BASE_SERVIDOR || id in IDS_COMPARTIDOS
+
+        /** Lee {"error":"..."} de la respuesta del servidor; si no viene, usa un mensaje genérico. */
+        fun mensajeDeError(cuerpo: String?, codigo: Int): String {
+            val delServidor = try {
+                JsonParser.parseString(cuerpo).asJsonObject.get("error")?.asString
+            } catch (e: Exception) {
+                null
+            }
+            return delServidor ?: "El servidor rechazó el guardado (código $codigo)."
+        }
+    }
 }
-    /** Convierte la respuesta del servidor en la entidad de Room. Lanza IllegalArgumentException si el módulo o el estado no existen. */
-    fun ActividadDto.aEntidad(imagenLocal: String? = null): Actividad = Actividad(
-        id = id,
-        nombre = nombre,
-        modulo = Modulo.valueOf(modulo),
-        curso = curso,
-        contenido = contenido,
-        objetivo = objetivo,
-        dificultad = dificultad,
-        instrucciones = instrucciones,
-        intentosPermitidos = intentosPermitidos,
-        estado = EstadoActividad.valueOf(estado),
-        textoTitulo = textoTitulo,
-        textoCuerpo = textoCuerpo,
-        // La imagen de galería vive solo en el teléfono: si el servidor no la trae, se conserva la local.
-        imagenRuta = imagenRuta ?: imagenLocal
-    )
+
+/** Convierte la respuesta del servidor en la entidad de Room. Lanza IllegalArgumentException si el módulo o el estado no existen. */
+fun ActividadDto.aEntidad(imagenLocal: String? = null): Actividad = Actividad(
+    id = id,
+    nombre = nombre,
+    modulo = Modulo.valueOf(modulo),
+    curso = curso,
+    contenido = contenido,
+    objetivo = objetivo,
+    dificultad = dificultad,
+    instrucciones = instrucciones,
+    intentosPermitidos = intentosPermitidos,
+    estado = EstadoActividad.valueOf(estado),
+    textoTitulo = textoTitulo,
+    textoCuerpo = textoCuerpo,
+    // La imagen de galería vive solo en el teléfono: si el servidor no la trae, se conserva la local.
+    imagenRuta = imagenRuta ?: imagenLocal
+)
+
 /** Datos editables que se envían al servidor. La imagen de galería no sale del teléfono. */
 fun Actividad.aSolicitud(): ActividadRequest = ActividadRequest(
     nombre = nombre,
@@ -240,4 +243,3 @@ fun Actividad.aSolicitud(): ActividadRequest = ActividadRequest(
     textoCuerpo = textoCuerpo,
     imagenRuta = null
 )
-

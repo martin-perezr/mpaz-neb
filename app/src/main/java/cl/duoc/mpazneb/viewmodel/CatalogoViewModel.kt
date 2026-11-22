@@ -84,6 +84,19 @@ class CatalogoViewModel(
         }
     }
 
+    fun eliminar(id: Long) {
+        viewModelScope.launch {
+            when (val resultado = actividades.eliminar(id)) {
+                is ResultadoAccion.Exito -> _estado.update {
+                    it.copy(mensaje = "Borrador eliminado", mensajeEsError = false)
+                }
+                is ResultadoAccion.Error -> _estado.update {
+                    it.copy(mensaje = resultado.mensaje, mensajeEsError = true)
+                }
+            }
+        }
+    }
+
     fun cerrarMensaje() = _estado.update { it.copy(mensaje = null) }
 
     fun cerrarSesion() {

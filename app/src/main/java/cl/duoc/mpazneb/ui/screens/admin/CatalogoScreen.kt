@@ -46,6 +46,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import java.io.File
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import cl.duoc.mpazneb.data.repository.ActividadRepository
+import cl.duoc.mpazneb.model.ActividadConConteo
 
 @Composable
 fun CatalogoScreen(
@@ -136,6 +143,26 @@ private fun ListaCatalogo(
     modifier: Modifier,
     mostrarFiltros: Boolean = false
 ) {
+    var porEliminar by remember { mutableStateOf<ActividadConConteo?>(null) }
+    porEliminar?.let { fila ->
+        AlertDialog(
+            onDismissRequest = { porEliminar = null },
+            title = { Text("Eliminar borrador") },
+            text = {
+                Text(
+                    "Se eliminará «${fila.actividad.nombre}» del servidor y de la app." +
+                            if (fila.totalPreguntas > 0) " Sus ${fila.totalPreguntas} preguntas también se eliminan." else ""
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.eliminar(fila.actividad.id)
+                    porEliminar = null
+                }) { Text("Eliminar") }
+            },
+            dismissButton = { TextButton(onClick = { porEliminar = null }) { Text("Cancelar") } }
+        )
+    }
     LazyColumn(
         modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -177,6 +204,9 @@ private fun ListaCatalogo(
                             BotonPrincipal("Desactivar", { vm.cambiarEstado(actividad.id, EstadoActividad.DESACTIVADA) }, Modifier.weight(1f))
                         } else {
                             BotonPrincipal("Activar", { vm.cambiarEstado(actividad.id, EstadoActividad.DISPONIBLE) }, Modifier.weight(1f))
+                        }
+                        if (actividad.estado == EstadoActividad.BORRADOR && ActividadRepository.esRemota(actividad.id)) {
+                            BotonPrincipal("Eliminar", { porEliminar = fila }, Modifier.weight(1f))
                         }
                     }
                 }

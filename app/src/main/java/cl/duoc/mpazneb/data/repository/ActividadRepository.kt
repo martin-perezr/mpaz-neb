@@ -50,6 +50,7 @@ class ActividadRepository(
             return ResultadoAccion.Error("El servidor envió actividades con datos que la app no reconoce.")
         }
         dao.upsertActividades(entidades)
+        dao.borrarRemotasAusentes(ID_BASE_SERVIDOR, remotas.map { it.id })
         return ResultadoAccion.Exito()
     }
 
@@ -117,6 +118,36 @@ class ActividadRepository(
             return enviarYGuardar(actual.copy(estado = estado))
         }
         dao.cambiarEstado(id, estado)
+        return ResultadoAccion.Exito(id = id)
+    }
+
+    /** Elimina un borrador. Room solo lo pierde cuando el servidor confirma con 204. */
+    suspend fun eliminar(id: Long): ResultadoAccion {
+        val prohibido = exigirAdmin()
+        if (prohibido != null) return ResultadoAccion.Error(prohibido)
+        val actividad = dao.obtener(id) ?: return ResultadoAccion.Error("La actividad ya no existe.")
+        if (!esRemota(id)) {
+            return ResultadoAccion.Error("Las actividades de ejemplo de la app no se eliminan.")
+        }
+        if (actividad.estado != EstadoActividad.BORRADOR) {
+            return ResultadoAccion.Error("Solo se pueden eliminar actividades en borrador.")
+        }
+        if (dao.contarAsignaciones(id) > 0) {
+            return ResultadoAccion.Error("La actividad tiene asignaciones y no se puede eliminar.")
+        }
+        val respuesta = try {
+            apiService.eliminarActividad(id)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return ResultadoAccion.Error(
+                "No se pudo eliminar en el servidor. Revisa la conexión; la actividad se conserva."
+            )
+        }
+        if (!respuesta.isSuccessful) {
+            return ResultadoAccion.Error(mensajeDeError(respuesta.errorBody()?.string(), respuesta.code()))
+        }
+        dao.borrarActividad(id)
         return ResultadoAccion.Exito(id = id)
     }
 

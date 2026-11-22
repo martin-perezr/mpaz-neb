@@ -104,4 +104,20 @@ abstract class ActividadDao {
     /** Inserta o actualiza sin borrar la fila, así no se pierden las preguntas asociadas. */
     @Upsert
     abstract suspend fun upsertActividades(actividades: List<Actividad>)
+
+    @Query("SELECT COUNT(*) FROM asignaciones WHERE actividadId = :actividadId")
+    abstract suspend fun contarAsignaciones(actividadId: Long): Int
+
+    @Query("DELETE FROM actividades WHERE id = :id")
+    abstract suspend fun borrarActividad(id: Long)
+
+    /** Quita las copias de filas del servidor que ya no tiene.*/
+    @Query(
+        """
+        DELETE FROM actividades
+        WHERE id > :base AND id NOT IN (:idsServidor)
+          AND NOT EXISTS (SELECT 1 FROM asignaciones WHERE asignaciones.actividadId = actividades.id)
+        """
+    )
+    abstract suspend fun borrarRemotasAusentes(base: Long, idsServidor: List<Long>)
 }

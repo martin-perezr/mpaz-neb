@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.first
 import cl.duoc.mpazneb.data.remote.ApiService
 import cl.duoc.mpazneb.data.remote.dto.ActividadDto
 import kotlinx.coroutines.CancellationException
+import cl.duoc.mpazneb.data.remote.dto.ActividadRequest
+import com.google.gson.JsonParser
 
 
 class ActividadRepository(
@@ -61,6 +63,20 @@ class ActividadRepository(
         /** Un id remoto que cae sobre una fila local distinta no debe pisar los datos locales. */
         fun esConflictoDeId(idRemoto: Long, idsLocales: Set<Long>): Boolean =
             idRemoto in idsLocales && idRemoto <= ID_BASE_SERVIDOR && idRemoto !in IDS_COMPARTIDOS
+
+        /** Nuevas (id 0), con id del servidor, o compartidas por acuerdo: estas viajan al servidor. */
+        fun esRemota(id: Long): Boolean =
+            id == 0L || id > ID_BASE_SERVIDOR || id in IDS_COMPARTIDOS
+
+        /** Lee {"error":"..."} de la respuesta del servidor; si no viene, usa un mensaje genérico. */
+        fun mensajeDeError(cuerpo: String?, codigo: Int): String {
+            val delServidor = try {
+                JsonParser.parseString(cuerpo).asJsonObject.get("error")?.asString
+            } catch (e: Exception) {
+                null
+            }
+            return delServidor ?: "El servidor rechazó el guardado (código $codigo)."
+        }
     }
 
     fun disponibles(modulo: Modulo, curso: Int, dificultad: Int): Flow<List<Actividad>> =
@@ -78,19 +94,16 @@ class ActividadRepository(
     suspend fun contarPreguntas(actividadId: Long): Int = dao.contarPreguntas(actividadId)
 
     /** Inserta si es nueva (id = 0) o actualiza si ya existe. Solo administración. */
+    /** Crea (POST) o edita (PUT) en el servidor y deja en Room lo que este confirma. Solo administración. */
     suspend fun guardar(actividad: Actividad): ResultadoAccion {
         val prohibido = exigirAdmin()
         if (prohibido != null) return ResultadoAccion.Error(prohibido)
         if (actividad.estado == EstadoActividad.DISPONIBLE && preguntasParaActivar(actividad) == 0) {
             return ResultadoAccion.Error("Agrega al menos una pregunta antes de dejar la actividad disponible.")
         }
-        val id = if (actividad.id == 0L) {
-            dao.insertar(actividad)
-        } else {
-            dao.actualizar(actividad)
-            actividad.id
-        }
-        return ResultadoAccion.Exito(id = id)
+        if (esRemota(actividad.id)) return enviarYGuardar(actividad)
+        dao.actualizar(actividad)
+        return ResultadoAccion.Exito(id = actividad.id)
     }
 
     suspend fun cambiarEstado(id: Long, estado: EstadoActividad): ResultadoAccion {
@@ -98,6 +111,10 @@ class ActividadRepository(
         if (prohibido != null) return ResultadoAccion.Error(prohibido)
         if (estado == EstadoActividad.DISPONIBLE && dao.contarPreguntas(id) == 0) {
             return ResultadoAccion.Error("Agrega al menos una pregunta antes de activar la actividad.")
+        }
+        if (esRemota(id)) {
+            val actual = dao.obtener(id) ?: return ResultadoAccion.Error("No se encontró la actividad.")
+            return enviarYGuardar(actual.copy(estado = estado))
         }
         dao.cambiarEstado(id, estado)
         return ResultadoAccion.Exito(id = id)
@@ -131,6 +148,34 @@ class ActividadRepository(
         if (sesion?.rol == Rol.ADMIN) return null
         return "Solo la administración pedagógica puede modificar actividades."
     }
+
+    /** POST si es nueva, PUT si ya tiene id del servidor. Room solo cambia si el servidor confirma. */
+    private suspend fun enviarYGuardar(actividad: Actividad): ResultadoAccion {
+        val respuesta = try {
+            if (actividad.id == 0L) {
+                apiService.crearActividad(actividad.aSolicitud())
+            } else {
+                apiService.editarActividad(actividad.id, actividad.aSolicitud())
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return ResultadoAccion.Error(
+                "No se pudo guardar en el servidor. Revisa la conexión y vuelve a intentarlo; lo que escribiste se conserva."
+            )
+        }
+        val dto = respuesta.body()
+        if (!respuesta.isSuccessful || dto == null) {
+            return ResultadoAccion.Error(mensajeDeError(respuesta.errorBody()?.string(), respuesta.code()))
+        }
+        val entidad = try {
+            dto.aEntidad(imagenLocal = actividad.imagenRuta)
+        } catch (e: IllegalArgumentException) {
+            return ResultadoAccion.Error("El servidor devolvió datos que la app no reconoce.")
+        }
+        dao.upsertActividades(listOf(entidad))
+        return ResultadoAccion.Exito(id = dto.id)
+    }
 }
     /** Convierte la respuesta del servidor en la entidad de Room. Lanza IllegalArgumentException si el módulo o el estado no existen. */
     fun ActividadDto.aEntidad(imagenLocal: String? = null): Actividad = Actividad(
@@ -149,3 +194,19 @@ class ActividadRepository(
         // La imagen de galería vive solo en el teléfono: si el servidor no la trae, se conserva la local.
         imagenRuta = imagenRuta ?: imagenLocal
     )
+/** Datos editables que se envían al servidor. La imagen de galería no sale del teléfono. */
+fun Actividad.aSolicitud(): ActividadRequest = ActividadRequest(
+    nombre = nombre,
+    modulo = modulo.name,
+    curso = curso,
+    contenido = contenido,
+    objetivo = objetivo,
+    dificultad = dificultad,
+    instrucciones = instrucciones,
+    intentosPermitidos = intentosPermitidos,
+    estado = estado.name,
+    textoTitulo = textoTitulo,
+    textoCuerpo = textoCuerpo,
+    imagenRuta = null
+)
+

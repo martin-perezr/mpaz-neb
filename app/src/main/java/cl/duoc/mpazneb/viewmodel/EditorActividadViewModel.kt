@@ -189,7 +189,9 @@ class EditorActividadViewModel(
         }
     }
 
+    private var guardando = false
     fun guardar() {
+        if (guardando) return
         _estado.update {
             it.copy(intentoGuardar = true, mensaje = null)
         }
@@ -248,32 +250,36 @@ class EditorActividadViewModel(
         )
 
         viewModelScope.launch {
-            when (val resultado = actividades.guardar(actividad)) {
-                is ResultadoAccion.Exito -> {
-                    val eraNueva = actual.id == 0L
-                    if (actual.imagenGuardada != actual.imagenRuta) {
-                        almacen.borrar(actual.imagenGuardada)
+            guardando = true
+            try {
+                when (val resultado = actividades.guardar(actividad)) {
+                    is ResultadoAccion.Exito -> {
+                        val eraNueva = actual.id == 0L
+                        if (actual.imagenGuardada != actual.imagenRuta) {
+                            almacen.borrar(actual.imagenGuardada)
+                        }
+                        _estado.update {
+                            it.copy(
+                                id = resultado.id,
+                                imagenGuardada = actual.imagenRuta,
+                                mensaje = "Actividad guardada.",
+                                mensajeEsError = false,
+                                navegarAId = if (eraNueva) resultado.id else null
+                            )
+                        }
                     }
 
-                    _estado.update {
-                        it.copy(
-                            id = resultado.id,
-                            imagenGuardada = actual.imagenRuta,
-                            mensaje = "Actividad guardada.",
-                            mensajeEsError = false,
-                            navegarAId = if (eraNueva) resultado.id else null
-                        )
+                    is ResultadoAccion.Error -> {
+                        _estado.update {
+                            it.copy(
+                                mensaje = resultado.mensaje,
+                                mensajeEsError = true
+                            )
+                        }
                     }
                 }
-
-                is ResultadoAccion.Error -> {
-                    _estado.update {
-                        it.copy(
-                            mensaje = resultado.mensaje,
-                            mensajeEsError = true
-                        )
-                    }
-                }
+            } finally {
+                guardando = false
             }
         }
     }
@@ -326,7 +332,6 @@ class EditorActividadViewModel(
                 }
                 return@launch
             }
-
             descartarSinGuardar()
 
             _estado.update {

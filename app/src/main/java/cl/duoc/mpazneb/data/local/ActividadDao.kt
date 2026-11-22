@@ -14,6 +14,7 @@ import cl.duoc.mpazneb.model.Modulo
 import cl.duoc.mpazneb.model.Pregunta
 import cl.duoc.mpazneb.model.PreguntaConAlternativas
 import kotlinx.coroutines.flow.Flow
+import androidx.room.Upsert
 
 // Clase abstracta (no interface) para poder escribir métodos @Transaction con cuerpo.
 @Dao
@@ -96,4 +97,11 @@ abstract class ActividadDao {
         insertarAlternativas(alternativas.map { it.copy(id = 0, preguntaId = id) })
         return id
     }
+
+    @Query("SELECT id FROM actividades")
+    abstract suspend fun idsExistentes(): List<Long>
+
+    /** Inserta o actualiza sin borrar la fila, así no se pierden las preguntas asociadas. */
+    @Upsert
+    abstract suspend fun upsertActividades(actividades: List<Actividad>)
 }

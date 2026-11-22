@@ -13,6 +13,8 @@ import cl.duoc.mpazneb.model.Rol
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import cl.duoc.mpazneb.data.remote.ApiService
+import cl.duoc.mpazneb.data.remote.dto.ActividadDto
+import kotlinx.coroutines.CancellationException
 
 
 class ActividadRepository(
@@ -23,6 +25,44 @@ class ActividadRepository(
 
     fun catalogo(): Flow<List<ActividadConConteo>> = dao.catalogo()
 
+    /**
+     * Pide el catálogo al servidor y lo deja en Room. Si falla la red, Room no se toca
+     * y la pantalla sigue mostrando el último catálogo guardado.
+     */
+    suspend fun refrescarCatalogo(): ResultadoAccion {
+        val remotas = try {
+            apiService.listarActividades()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return ResultadoAccion.Error(
+                "No se pudo conectar con el servidor. Se muestra el último catálogo guardado."
+            )
+        }
+        val locales = dao.idsExistentes().toSet()
+        val entidades = try {
+            remotas
+                .filterNot { esConflictoDeId(it.id, locales) }
+                .map { dto -> dto.aEntidad(imagenLocal = dao.obtener(dto.id)?.imagenRuta) }
+        } catch (e: IllegalArgumentException) {
+            return ResultadoAccion.Error("El servidor envió actividades con datos que la app no reconoce.")
+        }
+        dao.upsertActividades(entidades)
+        return ResultadoAccion.Exito()
+    }
+
+    companion object {
+        /** Los ids hasta este valor son de la semilla local; el servidor numera desde 1001. */
+        const val ID_BASE_SERVIDOR = 1000L
+
+        /** Ids de la semilla que también existen en el servidor por acuerdo con Hanael. */
+        val IDS_COMPARTIDOS: Set<Long> = emptySet()
+
+        /** Un id remoto que cae sobre una fila local distinta no debe pisar los datos locales. */
+        fun esConflictoDeId(idRemoto: Long, idsLocales: Set<Long>): Boolean =
+            idRemoto in idsLocales && idRemoto <= ID_BASE_SERVIDOR && idRemoto !in IDS_COMPARTIDOS
+    }
+
     fun disponibles(modulo: Modulo, curso: Int, dificultad: Int): Flow<List<Actividad>> =
         dao.disponibles(modulo, curso, dificultad)
 
@@ -30,7 +70,8 @@ class ActividadRepository(
 
     suspend fun obtenerCompleta(id: Long): ActividadConPreguntas? = dao.obtenerCompleta(id)
 
-    fun preguntasDe(actividadId: Long): Flow<List<PreguntaConAlternativas>> = dao.preguntasDe(actividadId)
+    fun preguntasDe(actividadId: Long): Flow<List<PreguntaConAlternativas>> =
+        dao.preguntasDe(actividadId)
 
     suspend fun obtenerPregunta(id: Long): PreguntaConAlternativas? = dao.obtenerPregunta(id)
 
@@ -62,7 +103,10 @@ class ActividadRepository(
         return ResultadoAccion.Exito(id = id)
     }
 
-    suspend fun guardarPregunta(pregunta: Pregunta, alternativas: List<Alternativa>): ResultadoAccion {
+    suspend fun guardarPregunta(
+        pregunta: Pregunta,
+        alternativas: List<Alternativa>
+    ): ResultadoAccion {
         val prohibido = exigirAdmin()
         if (prohibido != null) return ResultadoAccion.Error(prohibido)
         val id = dao.guardarPreguntaCompleta(pregunta, alternativas)
@@ -88,3 +132,20 @@ class ActividadRepository(
         return "Solo la administración pedagógica puede modificar actividades."
     }
 }
+    /** Convierte la respuesta del servidor en la entidad de Room. Lanza IllegalArgumentException si el módulo o el estado no existen. */
+    fun ActividadDto.aEntidad(imagenLocal: String? = null): Actividad = Actividad(
+        id = id,
+        nombre = nombre,
+        modulo = Modulo.valueOf(modulo),
+        curso = curso,
+        contenido = contenido,
+        objetivo = objetivo,
+        dificultad = dificultad,
+        instrucciones = instrucciones,
+        intentosPermitidos = intentosPermitidos,
+        estado = EstadoActividad.valueOf(estado),
+        textoTitulo = textoTitulo,
+        textoCuerpo = textoCuerpo,
+        // La imagen de galería vive solo en el teléfono: si el servidor no la trae, se conserva la local.
+        imagenRuta = imagenRuta ?: imagenLocal
+    )

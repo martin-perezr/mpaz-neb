@@ -58,6 +58,7 @@ class CatalogoViewModel(
                 return@launch
             }
             _estado.update { it.copy(alias = sesion.alias) }
+            refrescar()
             actividades.catalogo().collect { lista ->
                 _estado.update { it.copy(cargando = false, todas = lista) }
             }
@@ -97,6 +98,20 @@ class CatalogoViewModel(
             initializer {
                 val contenedor = contenedor()
                 CatalogoViewModel(contenedor.authRepository, contenedor.actividadRepository)
+            }
+        }
+    }
+
+    /** Pide el catálogo al servidor. El Flow de Room actualiza la lista y los filtros se mantienen. */
+    fun refrescar(avisarExito: Boolean = false) {
+        viewModelScope.launch {
+            when (val resultado = actividades.refrescarCatalogo()) {
+                is ResultadoAccion.Exito -> if (avisarExito) _estado.update {
+                    it.copy(mensaje = "Catálogo actualizado", mensajeEsError = false)
+                }
+                is ResultadoAccion.Error -> _estado.update {
+                    it.copy(mensaje = resultado.mensaje, mensajeEsError = true)
+                }
             }
         }
     }

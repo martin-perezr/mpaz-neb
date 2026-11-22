@@ -62,6 +62,9 @@ fun CatalogoScreen(
         titulo = "Catálogo · ${estado.alias}",
         onCerrarSesion = vm::cerrarSesion,
         acciones = {
+            TextButton(onClick = { vm.refrescar(avisarExito = true) }) {
+                Text("Actualizar", color = Color.White)
+            }
             TextButton(onClick = onNueva) { Text("Nueva", color = Color.White) }
         }
     ) { padding ->

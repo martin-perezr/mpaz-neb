@@ -13,7 +13,7 @@
 | **IE 3.1.2** | Microservicio Spring Boot + BD + endpoints | Actividades (Matías), asignaciones/códigos (Hanael), salud (Martín) | `backend-moviles` controllers | `.\mvnw.cmd test` (9 tests) | **0 fallos** | `target/site/jacoco/index.html` | **Cumplido** (servidor; no incluye captura Postman en repo) |
 | **IE 3.1.3** | Integración móvil CRUD con microservicio | `ActividadRepository`: GET sync, POST/PUT guardar, DELETE borrador, asignaciones/códigos | `ActividadRepositoryCrudRemotoTest`, `ActividadControllerRestTest` | JVM + manual | **CRUD actividad automatizado** (sin servidor real en JVM) | Postman / 2 emuladores **pendientes** captura | **Cumplido** técnico / evidencia manual pendiente |
 | **IE 3.1.4** | API externa Retrofit integrada en UI | Open Library en editor Lectura | `OpenLibraryClient`, `BuscarLibrosSection` | `OpenLibraryRepositoryTest`, `BuscarLibrosComposeInstrumentedTest` | **OK** | Tests §2 | **Cumplido** (sin captura pantalla en repo) |
-| **IE 3.2.1** | ≥ 80 % **código lógico** | ViewModels, Repositories, `domain`, Retrofit clients | `jacocoDebugLogicalUnitTestReport` | 65 tests JVM | **44,00 %** (653/1484 líneas) | `app/build/reports/jacoco/jacocoDebugLogicalUnitTestReport/` | **No cumplido** |
+| **IE 3.2.1** | ≥ 80 % **código lógico** | ViewModels, Repositories, `domain`, Retrofit clients | `jacocoDebugLogicalUnitTestReport` | 118 tests JVM | **80,04 %** (1303/1628) | `app/build/reports/jacoco/jacocoDebugLogicalUnitTestReport/` | **Cumplido** |
 | **IE 3.3.1** | APK release firmado + `.jks` | `signingConfigs` + `keystore.properties.example` | `app/build.gradle.kts`, `keystore.properties.example` | `assembleRelease` | APK **unsigned** generado sin keystore | `app/build/outputs/apk/release/app-release-unsigned.apk` | **Pendiente** — falta `.jks` y `keystore.properties` local |
 | **IE 3.3.2** | GitHub + Trello + commits por integrante | Ramas, Trello en README | Git history / Trello URL | Revisión `git shortlog` | Commits Matías/Martín en historial; trabajo Hana **sin commitear** aún | Capturas Trello **pendientes** | **Parcial** — push y evidencias AVA |
 
@@ -27,7 +27,7 @@ Tarea Gradle: `:app:jacocoDebugLogicalUnitTestReport` (`app/build.gradle.kts`, l
 
 **No excluye** ViewModels/Repositories para inflar el porcentaje.
 
-**Medición anterior:** **44,00 %** (653/1484). **Actual (2026-11-22, post-CRUD):** **47,51 %** (762/1604 líneas).
+**Medición anterior:** **47,51 %** (762/1604). **Cierre (2026-11-22):** **80,04 %** (1303/1628 líneas).
 
 Clases con mayor hueco (revisar HTML del informe): `SesionEstudianteViewModel`, `ResultadosViewModel`, `EditorPreguntaViewModel`, `AsistenteViewModel`, `CatalogoViewModel` (flujos `init`), factories de ViewModels.
 
@@ -67,7 +67,7 @@ JaCoCo: `.\mvnw.cmd test` genera `target/site/jacoco/index.html`.
 
 | Comando | Resultado |
 |---------|-----------|
-| `.\gradlew.bat :app:testDebugUnitTest` | **80 tests, 0 fallos** |
+| `.\gradlew.bat :app:testDebugUnitTest` | **118 tests, 0 fallos** |
 | `.\gradlew.bat :app:jacocoDebugUnitTestReport` | Informe JVM global |
 | `.\gradlew.bat :app:jacocoDebugLogicalUnitTestReport` | Informe **código lógico** (IE 3.2.1) |
 | `$env:ANDROID_SERIAL="emulator-5554"; .\gradlew.bat :app:connectedDebugAndroidTest` | **7 tests, 0 fallos** (suite aislada) |
@@ -125,6 +125,19 @@ Room usa `Room.inMemoryDatabaseBuilder` — **no** escribe `mpazneb.db` del emul
 
 ---
 
+## 2b. CRUD actividades desde la interfaz (verificado en código)
+
+| Operación | Pantalla / acción | Capa |
+|-----------|-------------------|------|
+| Consultar + sync | Catálogo UTP al iniciar | `CatalogoViewModel` → `sincronizarCatalogoRemoto` |
+| Crear / editar | Editor → **Guardar actividad** | `EditorActividadViewModel` → `ActividadRepository.guardar` (POST/PUT) |
+| Activar / desactivar | Catálogo → **Activar** / **Desactivar** | `cambiarEstado` (PUT remoto) |
+| Eliminar borrador | Catálogo → **Eliminar** (solo `BORRADOR`) + diálogo | `confirmarEliminar` → `eliminarBorrador` (DELETE) |
+
+**Prueba manual pendiente:** captura con Spring Boot local y actividad de prueba en borrador (no usar datos de demostración protegidos).
+
+---
+
 ## 3. Códigos HTTP (backend)
 
 Implementación en `AsignacionServicio` / controladores (Matías conserva CRUD actividades):
@@ -150,7 +163,7 @@ Implementación en `AsignacionServicio` / controladores (Matías conserva CRUD a
 | Backend global | 58,88 % | No | Incluye CRUD actividades de Matías sin tests propios |
 | Backend H1–H2 | ~81,82 % | **Sí** (alcance asignaciones) | `AsignacionServicioTest` |
 | Android JVM global | 10,99 % (642/5844) | No | UI, Room, Compose |
-| Android **código lógico** (IE 3.2.1) | **44,00 % (653/1484)** | **No** | Tarea `jacocoDebugLogicalUnitTestReport` |
+| Android **código lógico** (IE 3.2.1) | **80,04 % (1303/1628)** | **Sí** | Tarea `jacocoDebugLogicalUnitTestReport` |
 | Android instrumentada global | 15,43 % (última corrida documentada) | No | Re-ejecutar tras cambios si se exige HTML actualizado |
 
 Para el docente: el indicador **IE 3.2.1** debe leerse sobre el informe **lógico**, no sobre el global JVM.

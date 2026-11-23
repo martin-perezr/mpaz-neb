@@ -67,6 +67,69 @@ class CatalogoViewModelTest {
     }
 
     @Test
+    fun cambiarEstado_muestraErrorRemoto() = runTest {
+        val actividades = mockk<ActividadRepository> {
+            coEvery { sincronizarCatalogoRemoto() } returns cl.duoc.mpazneb.data.repository.ResultadoAccion.Exito()
+            every { catalogo() } returns flowOf(emptyList())
+            coEvery { cambiarEstado(3, cl.duoc.mpazneb.model.EstadoActividad.DISPONIBLE) } returns
+                cl.duoc.mpazneb.data.repository.ResultadoAccion.Error("Sin red")
+        }
+        val vm = CatalogoViewModel(PruebaFabrica.authAdmin(), actividades)
+        advanceUntilIdle()
+        vm.cambiarEstado(3, cl.duoc.mpazneb.model.EstadoActividad.DISPONIBLE)
+        advanceUntilIdle()
+        assertTrue(vm.estado.value.mensajeEsError)
+    }
+
+    @Test
+    fun confirmarEliminar_muestraExito() = runTest {
+        val auth = PruebaFabrica.authAdmin()
+        val actividades = mockk<ActividadRepository> {
+            coEvery { sincronizarCatalogoRemoto() } returns cl.duoc.mpazneb.data.repository.ResultadoAccion.Exito()
+            every { catalogo() } returns flowOf(emptyList())
+            coEvery { eliminarBorrador(8) } returns cl.duoc.mpazneb.data.repository.ResultadoAccion.Exito(8)
+        }
+        val vm = CatalogoViewModel(auth, actividades)
+        advanceUntilIdle()
+        vm.solicitarEliminar(8, "Borrador prueba")
+        vm.confirmarEliminar()
+        advanceUntilIdle()
+        assertEquals(null, vm.estado.value.eliminarPendienteId)
+    }
+
+    @Test
+    fun cerrarMensaje_y_sesion() = runTest {
+        val auth = mockk<AuthRepository> {
+            every { sesionActual } returns flowOf(
+                cl.duoc.mpazneb.data.sesion.SesionUsuario(1, "utp", cl.duoc.mpazneb.model.Rol.ADMIN),
+            )
+            coEvery { cerrarSesion() } returns Unit
+        }
+        val actividades = mockk<ActividadRepository> {
+            coEvery { sincronizarCatalogoRemoto() } returns cl.duoc.mpazneb.data.repository.ResultadoAccion.Exito()
+            every { catalogo() } returns flowOf(emptyList())
+        }
+        val vm = CatalogoViewModel(auth, actividades)
+        advanceUntilIdle()
+        vm.cerrarMensaje()
+        vm.cerrarSesion()
+        advanceUntilIdle()
+        assertTrue(vm.estado.value.sesionCerrada)
+    }
+
+    @Test
+    fun init_muestraErrorDeSync() = runTest {
+        val actividades = mockk<ActividadRepository> {
+            coEvery { sincronizarCatalogoRemoto() } returns
+                cl.duoc.mpazneb.data.repository.ResultadoAccion.Error("Sin servidor")
+            every { catalogo() } returns flowOf(emptyList())
+        }
+        val vm = CatalogoViewModel(PruebaFabrica.authAdmin(), actividades)
+        advanceUntilIdle()
+        assertTrue(vm.estado.value.mensajeEsError)
+    }
+
+    @Test
     fun init_sinPermisoSiNoEsAdmin() = runTest {
         val auth = PruebaFabrica.authAsistente()
         val actividades = mockk<ActividadRepository> {

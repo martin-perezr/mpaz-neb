@@ -16,7 +16,8 @@ class InMemoryAsignacionDao : AsignacionDao {
     private var nextEstudianteId = 1L
     val asignaciones = mutableListOf<Asignacion>()
     val estudiantes = mutableListOf<Estudiante>()
-  var asistentesRegistrados = setOf(2L)
+    val observacionesList = mutableListOf<Observacion>()
+    var asistentesRegistrados = setOf(2L)
 
     override fun estudiantesPorCurso(curso: Int): Flow<List<Estudiante>> =
         flowOf(estudiantes.filter { it.curso == curso })
@@ -109,7 +110,10 @@ class InMemoryAsignacionDao : AsignacionDao {
 
     override fun respuestas(asignacionId: Long): Flow<List<Respuesta>> = flowOf(emptyList())
 
-    override suspend fun insertarObservacion(observacion: Observacion): Long = observacion.id
+    override suspend fun insertarObservacion(observacion: Observacion): Long {
+        observacionesList += observacion
+        return observacion.id
+    }
 
     override fun observaciones(asignacionId: Long): Flow<List<Observacion>> = flowOf(emptyList())
 }

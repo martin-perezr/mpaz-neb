@@ -167,7 +167,7 @@ Flujo en `ActividadRepository` (administración UTP):
 | **Leer / sincronizar** | `GET /api/actividades` al abrir catálogo | Fusiona por `idRemoto` sin duplicar |
 | **Crear / editar** | `POST` o `PUT` según `idRemoto` | Solo persiste si el servidor responde OK |
 | **Cambiar estado** | `PUT` con estado actualizado | Actualiza metadata local |
-| **Eliminar borrador** | `DELETE /api/actividades/{id}` (reglas Matías) | `eliminarBorrador(idLocal)` borra local tras 204 |
+| **Eliminar borrador** | `DELETE /api/actividades/{id}` (reglas Matías) | Catálogo → botón **Eliminar** + confirmación → `eliminarBorrador` |
 
 Las **preguntas** siguen solo en Room (el backend no las almacena).
 
@@ -175,17 +175,17 @@ Las **preguntas** siguen solo en Room (el backend no las almacena).
 
 | Suite | Resultado |
 |-------|-----------|
-| Android JVM | **80 tests**, 0 fallos |
+| Android JVM | **118 tests**, 0 fallos |
 | Android instrumentadas (suite aislada) | **7 tests** (sin re-ejecutar en este cierre) |
 | Backend `mvn test` | **9 tests**, 0 fallos |
-| Cobertura lógica Android | **47,51 %** (762/1604 líneas) — ver `jacocoDebugLogicalUnitTestReport` |
+| Cobertura lógica Android | **80,04 %** (1303/1628 líneas) — `jacocoDebugLogicalUnitTestReport` |
 
 **APK firmado:** pendiente (configuración lista en `keystore.properties.example`; no incluido en esta entrega).
 
 ## Limitaciones conocidas
 
 - Preguntas y alternativas **no** se sincronizan entre dispositivos (solo metadata de actividad en el servidor).
-- Cobertura lógica aún **por debajo del 80 %** exigido en IE 3.2.1; ver clases pendientes en CASOS_DE_PRUEBA.
+- Algunos métodos auxiliares de ViewModel (p. ej. `elegirImagen`) siguen sin prueba JVM por depender de `Uri`/dispositivo.
 - Release sin URL configurada no puede hablar con el backend.
 
 ## Organización

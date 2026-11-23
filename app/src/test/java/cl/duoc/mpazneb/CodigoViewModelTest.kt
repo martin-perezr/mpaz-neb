@@ -65,6 +65,25 @@ class CodigoViewModelTest {
     }
 
     @Test
+    fun pegarDesdePortapapeles_rellenaCodigo() = runTest {
+        val vm = CodigoViewModel(mockk(relaxed = true))
+        vm.pegarDesdePortapapeles("  482196  ")
+        assertEquals("482196", vm.estado.value.codigo)
+    }
+
+    @Test
+    fun entrar_muestraNoExiste() = runTest {
+        val asignaciones = mockk<AsignacionRepository> {
+            coEvery { validarCodigo(any()) } returns ResultadoCodigo.NoExiste
+        }
+        val vm = CodigoViewModel(asignaciones)
+        "111111".forEach(vm::tecla)
+        vm.entrar()
+        advanceUntilIdle()
+        assertTrue(vm.estado.value.mensaje!!.contains("no está"))
+    }
+
+    @Test
     fun entrar_incrementaErroresSiElCodigoVencio() = runTest {
         val asignaciones = mockk<AsignacionRepository> {
             coEvery { validarCodigo(any()) } returns ResultadoCodigo.Vencido

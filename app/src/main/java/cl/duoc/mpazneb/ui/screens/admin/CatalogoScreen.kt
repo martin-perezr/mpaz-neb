@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,6 +58,25 @@ fun CatalogoScreen(
     val estado by vm.estado.collectAsStateWithLifecycle()
     LaunchedEffect(estado.sinPermiso) { if (estado.sinPermiso) onSalir() }
     LaunchedEffect(estado.sesionCerrada) { if (estado.sesionCerrada) onSalir() }
+
+    if (estado.eliminarPendienteId != null) {
+        AlertDialog(
+            onDismissRequest = vm::cancelarEliminar,
+            title = { Text("Eliminar borrador") },
+            text = {
+                Text(
+                    "Se eliminará «${estado.eliminarPendienteNombre}» en el servidor si no tiene asignaciones. " +
+                        "Las preguntas locales también se borrarán."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = vm::confirmarEliminar) { Text("Eliminar") }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::cancelarEliminar) { Text("Cancelar") }
+            },
+        )
+    }
 
     MarcoAdulto(
         titulo = "Catálogo · ${estado.alias}",
@@ -172,6 +192,8 @@ private fun ListaCatalogo(
                         BotonPrincipal("Editar", { onEditar(actividad.id) }, Modifier.weight(1f))
                         if (actividad.estado == EstadoActividad.DISPONIBLE) {
                             BotonPrincipal("Desactivar", { vm.cambiarEstado(actividad.id, EstadoActividad.DESACTIVADA) }, Modifier.weight(1f))
+                        } else if (actividad.estado == EstadoActividad.BORRADOR) {
+                            BotonPrincipal("Eliminar", { vm.solicitarEliminar(actividad.id, actividad.nombre) }, Modifier.weight(1f))
                         } else {
                             BotonPrincipal("Activar", { vm.cambiarEstado(actividad.id, EstadoActividad.DISPONIBLE) }, Modifier.weight(1f))
                         }

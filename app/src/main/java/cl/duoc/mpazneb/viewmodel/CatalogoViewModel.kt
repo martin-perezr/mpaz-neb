@@ -29,7 +29,9 @@ data class CatalogoUiState(
     val mensaje: String? = null,
     val mensajeEsError: Boolean = false,
     val sinPermiso: Boolean = false,
-    val sesionCerrada: Boolean = false
+    val sesionCerrada: Boolean = false,
+    val eliminarPendienteId: Long? = null,
+    val eliminarPendienteNombre: String = "",
 ) {
     /** El filtro ocurre aquí, sobre la lista que ya llegó de Room. */
     val visibles: List<ActividadConConteo>
@@ -90,6 +92,36 @@ class CatalogoViewModel(
     }
 
     fun cerrarMensaje() = _estado.update { it.copy(mensaje = null) }
+
+    fun solicitarEliminar(id: Long, nombre: String) =
+        _estado.update { it.copy(eliminarPendienteId = id, eliminarPendienteNombre = nombre) }
+
+    fun cancelarEliminar() =
+        _estado.update { it.copy(eliminarPendienteId = null, eliminarPendienteNombre = "") }
+
+    fun confirmarEliminar() {
+        val id = _estado.value.eliminarPendienteId ?: return
+        viewModelScope.launch {
+            when (val resultado = actividades.eliminarBorrador(id)) {
+                is ResultadoAccion.Exito -> _estado.update {
+                    it.copy(
+                        eliminarPendienteId = null,
+                        eliminarPendienteNombre = "",
+                        mensaje = "Borrador eliminado del servidor y de esta tablet.",
+                        mensajeEsError = false,
+                    )
+                }
+                is ResultadoAccion.Error -> _estado.update {
+                    it.copy(
+                        eliminarPendienteId = null,
+                        eliminarPendienteNombre = "",
+                        mensaje = resultado.mensaje,
+                        mensajeEsError = true,
+                    )
+                }
+            }
+        }
+    }
 
     fun cerrarSesion() {
         viewModelScope.launch {

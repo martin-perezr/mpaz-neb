@@ -58,6 +58,12 @@ class CatalogoViewModel(
                 return@launch
             }
             _estado.update { it.copy(alias = sesion.alias) }
+            when (val sync = actividades.sincronizarCatalogoRemoto()) {
+                is ResultadoAccion.Error -> _estado.update {
+                    it.copy(mensaje = sync.mensaje, mensajeEsError = true)
+                }
+                else -> Unit
+            }
             actividades.catalogo().collect { lista ->
                 _estado.update { it.copy(cargando = false, todas = lista) }
             }

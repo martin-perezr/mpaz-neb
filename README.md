@@ -2,91 +2,194 @@
 
 Aplicación Android para practicar Lectura y Matemática de 1.º a 4.º básico en la Escuela Escritora Marcela Paz. Es un MVP académico: usa personas y observaciones ficticias, no pone notas y no reemplaza al profesorado.
 
+**Repositorios del equipo**
+
+| Componente | Carpeta / remoto |
+|------------|------------------|
+| Cliente Android (este repo) | `mpaz-neb` |
+| Microservicio Spring Boot | `backend-moviles` (misma organización GitHub) |
+
+Rama de integración de la evaluación parcial 4: `feature/hana-codigos-api`.
+
 ## Integrantes
 
 - Hanael Echeverría
 - Matías Soto
 - Martín Pérez
 
-## Tecnologías
+## Funcionalidades principales
 
-- Kotlin y Jetpack Compose
-- Material Design 3
-- MVVM, Repository y StateFlow
-- Room
-- Navegación de Compose
-- DataStore para recordar la sesión del adulto
-- Recursos nativos: galería con permiso de lectura de imágenes, síntesis de voz, vibración y exportación CSV con el selector de archivos.
+- **Administración** (`utp.demo`): catálogo, filtros, CRUD local de actividades y preguntas, galería, activación.
+- **Asistente** (`asistente.aula2`): asignar actividad, generar código de 6 dígitos (30 min), resultados y CSV.
+- **Estudiante**: ingreso por código, lectura/voz, respuestas y cierre sin nota.
+- **Backend (equipo)**: CRUD de **actividades** vía Retrofit + Room (`idRemoto`), asignaciones y validación de códigos; SQLite compartido entre dispositivos con el mismo servidor.
+- **API externa**: búsqueda **Open Library** en el editor de actividades de Lectura (Retrofit).
 
-## Qué puede hacer
-
-- Administración (`utp.demo`): ver, filtrar, crear, editar, activar y desactivar actividades y sus preguntas, y agregarles una ilustración desde la galería.
-- Asistente (`asistente.aula2`): elegir módulo, curso y dificultad, asignar una actividad disponible, generar un código de 6 números, revisar resultados y anotar una observación ficticia.
-- Estudiante: entrar con el código, leer o escuchar, responder, confirmar, reintentar y ver un cierre sin nota.
-
-## Cuentas y códigos ficticios
+## Cuentas ficticias
 
 | Uso | Dato |
 | --- | --- |
 | Docente / UTP | alias `utp.demo`, clave `Utp2026` |
 | Asistente | alias `asistente.aula2`, clave `Aula2026` |
-| Código vigente | `482196`, estudiante Pudú-12, lectura “El volantín de Tomás” |
-| Código vencido | `111111` |
-| Código ya usado | `222222` |
 
-Los códigos que crea la asistente vencen a los 30 minutos. `482196` dura más solo para poder demostrarlo. No es una clave institucional.
+Los códigos que crea la asistente vencen a los 30 minutos en el servidor. No son claves institucionales.
 
 ## Requisitos
 
-- Android Studio actual
-- Android SDK 37
-- Un emulador o una tablet/teléfono con Android 9 o superior (`minSdk` 28)
+- **JDK 21** (backend) y **Android Studio** reciente (Android SDK 37).
+- Emulador o dispositivo con **Android 9+** (`minSdk` 28).
+- Para integración local: **Spring Boot** en el PC (`backend-moviles`) y, en emulador, `adb reverse tcp:8080 tcp:8080`.
 
-## Abrir el proyecto
+## Microservicio — endpoints
 
-1. Android Studio → **File → Open**.
-2. Elige la carpeta del proyecto, la que contiene `settings.gradle.kts`.
-3. Espera a que termine **Sync**.
-4. Si pide la plataforma 37, acepta la instalación.
-5. Crea un dispositivo tablet, por ejemplo Pixel Tablet, en horizontal.
-6. Pulsa **Run**.
+Base URL típica en desarrollo: `http://127.0.0.1:8080/` (debug Android con `adb reverse`).
 
-También se puede compilar en la terminal, dentro de la carpeta del proyecto:
+| Método | Ruta | Uso |
+|--------|------|-----|
+| GET | `/api/salud` | Comprobación de conectividad (Martín) |
+| GET | `/api/actividades` | Catálogo remoto (Matías) |
+| POST | `/api/actividades` | Crear actividad (Matías) |
+| PUT | `/api/actividades/{id}` | Editar (Matías) |
+| DELETE | `/api/actividades/{id}` | Eliminar (Matías) |
+| POST | `/api/asignaciones` | Crear asignación + código (Hanael) |
+| POST | `/api/codigos/validar` | Validar código de estudiante (Hanael) |
+
+Persistencia del servidor: `mpazneb-servidor.db` (no borrar al evaluar). Tests Maven usan `mpazneb-test.db` (perfil `test`).
+
+## API externa — Open Library
+
+| Método | Base | Ejemplo |
+|--------|------|---------|
+| GET | `https://openlibrary.org` | Búsqueda vía `OpenLibraryService` (`/search.json`) |
+
+La app conserva datos locales en Room; la búsqueda solo rellena la lista en pantalla (no sobrescribe la BD local automáticamente).
+
+## Ejecutar el backend
 
 ```powershell
-.\gradlew.bat :app:assembleDebug
-.\gradlew.bat :app:testDebugUnitTest
+cd backend-moviles
+# Verificar src/test/resources/application-test.properties → jdbc:sqlite:mpazneb-test.db
+.\mvnw.cmd test
+.\mvnw.cmd spring-boot:run
 ```
 
-## Cómo probar el recorrido
+El servidor escucha en el puerto **8080** por defecto. `spring-boot:run` usa `mpazneb-servidor.db` sin borrar datos existentes.
 
-1. Entra como `utp.demo` y revisa el catálogo. Crea una actividad, guarda, agrega una pregunta y actívala.
-2. Sal y entra como `asistente.aula2`. Elige módulo, curso y dificultad. Asigna la actividad a un estudiante que no tenga otra abierta.
-3. Anota el código de 6 números. Sal de la sesión.
-4. Entra como estudiante, escribe el código y responde.
-5. Vuelve como asistente, abre Resultados y exporta el CSV.
-6. Cierra la app y ábrela de nuevo. Las asignaciones siguen en la base.
+JaCoCo backend: tras `mvn test`, abrir `target/site/jacoco/index.html`.
 
-Pudú-12 ya tiene el código `482196` abierto. Para asignarle otra actividad hay que terminar esa o elegir otro estudiante, por ejemplo Chinchilla-05 en 1.º básico.
+## Ejecutar la app Android
 
-## Galería y permisos
+```powershell
+cd mpaz-neb
+.\gradlew.bat :app:assembleDebug
+# Emulador + backend en el PC:
+adb reverse tcp:8080 tcp:8080
+```
 
-1. Entra como `utp.demo`, abre una actividad y pulsa **Elegir de la galería**.
-2. La primera vez la app pide permiso para ver tus fotos. Hasta Android 12 es `READ_EXTERNAL_STORAGE`; desde Android 13, `READ_MEDIA_IMAGES`, y desde Android 14 se puede compartir solo algunas fotos.
-3. Elige una foto JPG, PNG o WEBP de hasta 5 MB. La app la copia a su carpeta privada y la muestra con borde redondeado.
-4. Guarda la actividad. La ilustración aparece en el catálogo y en la lectura del estudiante.
-5. Si rechazas el permiso, la app explica cómo activarlo en Ajustes y no abre la galería.
+Abrir el proyecto en Android Studio y **Run** en emulador tablet recomendado.
 
-## Limitaciones
+### URL del servidor en la app
 
-- No hay servidor. Lo que se guarda en una tablet no aparece en otra.
-- No hay RUT, diagnósticos, datos PIE ni calificaciones oficiales.
-- No usa cámara, micrófono, GPS, biometría ni contactos.
-- La semilla trae 13 actividades de ejemplo de Lectura y Matemática de 1.º a 4.º básico, no todas las unidades del año.
+| Variante | Configuración |
+|----------|----------------|
+| **Debug** | `BuildConfig.API_BASE_URL` = `http://127.0.0.1:8080/` + `adb reverse` |
+| **Release** | Por defecto placeholder inválido. Para evaluación, definir antes de compilar: |
 
-## Organización del trabajo
+```powershell
+# IP LAN del PC (dispositivo físico) o http://10.0.2.2:8080/ (emulador sin reverse)
+.\gradlew.bat :app:assembleRelease -PmpazReleaseApiBaseUrl="http://10.0.2.2:8080/"
+```
 
-- Arquitectura y responsabilidades de cada capa: [ARQUITECTURA.md](ARQUITECTURA.md).
-- Casos de prueba: [CASOS_DE_PRUEBA.md](CASOS_DE_PRUEBA.md).
-- Ramas: `main` (versión entregada), `develop` (integración) y una rama por tarea, que entra a `develop` con pull request.
-- Planificación y reparto de tareas en Trello: https://trello.com/b/0EkPsNiH/mpaz-neb-dsy1105
+O variable de entorno `MPAZ_RELEASE_API_BASE_URL`.
+
+`app/src/debug/res/xml/network_security_config.xml` permite cleartext a localhost en debug. Release permite cleartext solo a `10.0.2.2` (`app/src/main/res/xml/...`).
+
+## Pruebas automatizadas
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest
+.\gradlew.bat :app:jacocoDebugUnitTestReport
+# Cobertura IE 3.2.1 (solo código lógico):
+.\gradlew.bat :app:jacocoDebugLogicalUnitTestReport
+```
+
+Informes:
+
+- Global JVM: `app/build/reports/jacoco/jacocoDebugUnitTestReport/html/index.html`
+- **Código lógico** (ViewModels, Repositories, `domain`, clientes Retrofit): `app/build/reports/jacoco/jacocoDebugLogicalUnitTestReport/html/index.html`
+
+Instrumentadas (un emulador, sin backend en la suite habitual):
+
+```powershell
+$env:ANDROID_SERIAL="emulator-5554"
+.\gradlew.bat :app:connectedDebugAndroidTest :app:jacocoDebugAndroidTestReport
+```
+
+Prueba de integración de Martín (`SaludApiInstrumentedTest`): ver [CASOS_DE_PRUEBA.md](CASOS_DE_PRUEBA.md).
+
+Detalle de casos, matriz IE y evidencias: **[CASOS_DE_PRUEBA.md](CASOS_DE_PRUEBA.md)**.
+
+## APK firmado (IE 3.3.1)
+
+1. Copiar `keystore.properties.example` → `keystore.properties` (ignorado por Git).
+2. Generar un `.jks` **solo para esta evaluación** (comando en el ejemplo). **No** subir contraseñas a GitHub.
+3. Compilar:
+
+```powershell
+.\gradlew.bat :app:assembleRelease -PmpazReleaseApiBaseUrl="http://10.0.2.2:8080/"
+```
+
+4. APK firmado: `app/build/outputs/apk/release/app-release.apk` (con `keystore.properties` presente).
+5. Verificar firma (Android SDK build-tools):
+
+```powershell
+apksigner verify --print-certs app\build\outputs\apk\release\app-release.apk
+```
+
+Entregar el `.jks` y el APK según la pauta AVA (el `.jks` puede ir en la entrega grupal, no en el repo público con contraseña).
+
+**Captura del APK firmado:** pendiente hasta generar `keystore.properties` localmente.
+
+## Flujo de demostración (con backend)
+
+1. Levantar `backend-moviles` (`spring-boot:run`).
+2. `adb reverse tcp:8080 tcp:8080` (emulador).
+3. Login asistente → asignar → anotar código.
+4. Segundo emulador o sesión estudiante → validar código.
+5. Editor UTP → módulo Lectura → **Buscar libros** (Open Library).
+
+## CRUD de actividades (IE 3.1.3)
+
+Flujo en `ActividadRepository` (administración UTP):
+
+| Operación | REST | Room |
+|-----------|------|------|
+| **Leer / sincronizar** | `GET /api/actividades` al abrir catálogo | Fusiona por `idRemoto` sin duplicar |
+| **Crear / editar** | `POST` o `PUT` según `idRemoto` | Solo persiste si el servidor responde OK |
+| **Cambiar estado** | `PUT` con estado actualizado | Actualiza metadata local |
+| **Eliminar borrador** | `DELETE /api/actividades/{id}` (reglas Matías) | `eliminarBorrador(idLocal)` borra local tras 204 |
+
+Las **preguntas** siguen solo en Room (el backend no las almacena).
+
+## Resultados de pruebas (última verificación local)
+
+| Suite | Resultado |
+|-------|-----------|
+| Android JVM | **80 tests**, 0 fallos |
+| Android instrumentadas (suite aislada) | **7 tests** (sin re-ejecutar en este cierre) |
+| Backend `mvn test` | **9 tests**, 0 fallos |
+| Cobertura lógica Android | **47,51 %** (762/1604 líneas) — ver `jacocoDebugLogicalUnitTestReport` |
+
+**APK firmado:** pendiente (configuración lista en `keystore.properties.example`; no incluido en esta entrega).
+
+## Limitaciones conocidas
+
+- Preguntas y alternativas **no** se sincronizan entre dispositivos (solo metadata de actividad en el servidor).
+- Cobertura lógica aún **por debajo del 80 %** exigido en IE 3.2.1; ver clases pendientes en CASOS_DE_PRUEBA.
+- Release sin URL configurada no puede hablar con el backend.
+
+## Organización
+
+- Arquitectura: [ARQUITECTURA.md](ARQUITECTURA.md)
+- Planificación Trello: https://trello.com/b/0EkPsNiH/mpaz-neb-dsy1105 (aportar capturas en la entrega AVA)
+- Evidencias y matriz de indicadores IE: [CASOS_DE_PRUEBA.md](CASOS_DE_PRUEBA.md)

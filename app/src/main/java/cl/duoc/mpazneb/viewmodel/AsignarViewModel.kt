@@ -29,7 +29,8 @@ data class AsignarUiState(
     val codigo: String? = null,
     val mensaje: String? = null,
     val mensajeEsError: Boolean = false,
-    val sinPermiso: Boolean = false
+    val sinPermiso: Boolean = false,
+    val asignando: Boolean = false
 ) {
     val errorEstudiante: String?
         get() = if (intentoAsignar) AsignacionFormValidator.validarEstudiante(estudianteId) else null
@@ -73,17 +74,20 @@ class AsignarViewModel(
             _estado.update { it.copy(mensaje = "Elige un estudiante ficticio.", mensajeEsError = true) }
             return
         }
+        if (_estado.value.asignando) return
         viewModelScope.launch {
+            _estado.update { it.copy(asignando = true) }
             when (val resultado = asignaciones.crear(estudianteId!!, actividadId)) {
                 is ResultadoAccion.Exito -> _estado.update {
                     it.copy(
+                        asignando = false,
                         codigo = resultado.asignacion?.codigo,
                         mensaje = "Asignación guardada. El código vence en 30 minutos.",
                         mensajeEsError = false
                     )
                 }
                 is ResultadoAccion.Error -> _estado.update {
-                    it.copy(mensaje = resultado.mensaje, mensajeEsError = true)
+                    it.copy(asignando = false, mensaje = resultado.mensaje, mensajeEsError = true)
                 }
             }
         }

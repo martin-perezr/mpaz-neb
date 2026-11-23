@@ -42,7 +42,9 @@ data class Actividad(
     val textoTitulo: String? = null,
     val textoCuerpo: String? = null,
     // Ruta interna de la ilustración elegida desde la galería
-    val imagenRuta: String? = null
+    val imagenRuta: String? = null,
+  /** Identificador de la misma actividad en Spring Boot (p. ej. 1001). */
+    val idRemoto: Long? = null
 )
 
 @Entity(

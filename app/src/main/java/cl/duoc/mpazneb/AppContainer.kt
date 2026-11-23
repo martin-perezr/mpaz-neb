@@ -25,7 +25,7 @@ class AppContainer(context: Context) {
         db.actividadDao(), authRepository, apiService
     )
     val asignacionRepository = AsignacionRepository(
-        db.asignacionDao(), db.actividadDao(), authRepository, apiService
+        db.asignacionDao(), authRepository, actividadRepository, apiService
     )
     val almacenImagenes = AlmacenImagenes(context)
 }

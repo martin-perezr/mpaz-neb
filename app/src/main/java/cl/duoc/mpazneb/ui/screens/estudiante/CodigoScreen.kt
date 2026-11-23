@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -77,6 +79,7 @@ fun CodigoScreen(
     vm: CodigoViewModel = viewModel(factory = CodigoViewModel.Factory)
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val portapapeles = LocalClipboardManager.current
     val voz = rememberVoz()
     val tamano = rememberTamanoVentana()
     // En teléfono las casillas y las teclas se achican para caber en ~320 dp de ancho.
@@ -117,6 +120,27 @@ fun CodigoScreen(
                         compacta = compacta
                     )
                 }
+            }
+            OutlinedButton(
+                onClick = { vm.pegarDesdePortapapeles(portapapeles.getText()?.text.orEmpty()) },
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(2.dp, Durazno),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White,
+                    contentColor = Grafito
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    Icons.Filled.ContentPaste,
+                    contentDescription = "Pegar código",
+                    modifier = Modifier.size(22.dp)
+                )
+                Text(
+                    "  Pegar código",
+                    style = TextoEstudiante.instruccion,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
             }
             AnimatedVisibility(visible = estado.mensaje != null, enter = scaleIn()) {
                 Row(

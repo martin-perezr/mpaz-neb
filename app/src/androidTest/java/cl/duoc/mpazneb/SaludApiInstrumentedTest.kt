@@ -8,6 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@IntegracionBackendReal
 class SaludApiInstrumentedTest {
 
     @Test
@@ -16,4 +17,3 @@ class SaludApiInstrumentedTest {
         assertEquals("ok", respuesta.estado)
     }
 }
-

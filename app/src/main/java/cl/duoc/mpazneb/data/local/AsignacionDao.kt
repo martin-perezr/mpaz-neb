@@ -22,6 +22,12 @@ interface AsignacionDao {
     @Query("SELECT COUNT(*) FROM estudiantes WHERE alias = :alias COLLATE NOCASE")
     suspend fun contarAlias(alias: String): Int
 
+    @Query("SELECT * FROM estudiantes WHERE id = :id")
+    suspend fun obtenerEstudiante(id: Long): Estudiante?
+
+    @Query("SELECT COUNT(*) FROM usuarios WHERE id = :id AND rol = 'ASISTENTE'")
+    suspend fun existeAsistente(id: Long): Int
+
     @Insert
     suspend fun insertarEstudiante(estudiante: Estudiante): Long
 
@@ -35,6 +41,16 @@ interface AsignacionDao {
 
     @Query("SELECT * FROM asignaciones WHERE codigo = :codigo ORDER BY creadaEn DESC LIMIT 1")
     suspend fun buscarPorCodigo(codigo: String): Asignacion?
+
+    @Query(
+        """
+        SELECT * FROM asignaciones
+        WHERE estudianteId = :estudianteId AND actividadId = :actividadId
+          AND estado != 'FINALIZADA' AND venceEn > :ahora
+        ORDER BY creadaEn DESC LIMIT 1
+        """
+    )
+    suspend fun asignacionVigente(estudianteId: Long, actividadId: Long, ahora: Long): Asignacion?
 
     @Query("SELECT COUNT(*) FROM asignaciones WHERE codigo = :codigo AND estado != 'FINALIZADA' AND venceEn > :ahora")
     suspend fun codigoEnUso(codigo: String, ahora: Long): Int

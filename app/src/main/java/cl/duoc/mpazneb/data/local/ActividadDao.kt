@@ -42,6 +42,26 @@ abstract class ActividadDao {
     @Query("SELECT * FROM actividades WHERE id = :id")
     abstract suspend fun obtener(id: Long): Actividad?
 
+    @Query("SELECT * FROM actividades WHERE idRemoto = :idRemoto LIMIT 1")
+    abstract suspend fun obtenerPorIdRemoto(idRemoto: Long): Actividad?
+
+    @Query("UPDATE actividades SET idRemoto = :idRemoto WHERE id = :id")
+    abstract suspend fun actualizarIdRemoto(id: Long, idRemoto: Long)
+
+    @Query(
+        """
+        SELECT * FROM actividades
+        WHERE nombre = :nombre COLLATE NOCASE
+          AND modulo = :modulo AND curso = :curso AND dificultad = :dificultad
+        """
+    )
+    abstract suspend fun coincidenciasConRemota(
+        nombre: String,
+        modulo: Modulo,
+        curso: Int,
+        dificultad: Int
+    ): List<Actividad>
+
     @Transaction
     @Query("SELECT * FROM actividades WHERE id = :id")
     abstract suspend fun obtenerCompleta(id: Long): ActividadConPreguntas?
@@ -54,6 +74,9 @@ abstract class ActividadDao {
 
     @Query("UPDATE actividades SET estado = :estado WHERE id = :id")
     abstract suspend fun cambiarEstado(id: Long, estado: EstadoActividad)
+
+    @Query("DELETE FROM actividades WHERE id = :id")
+    abstract suspend fun eliminarActividad(id: Long)
 
     // ---------- Preguntas y alternativas ----------
 

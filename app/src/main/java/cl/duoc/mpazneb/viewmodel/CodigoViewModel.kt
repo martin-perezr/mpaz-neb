@@ -8,6 +8,7 @@ import cl.duoc.mpazneb.contenedor
 import cl.duoc.mpazneb.data.repository.AsignacionRepository
 import cl.duoc.mpazneb.data.repository.ResultadoCodigo
 import cl.duoc.mpazneb.domain.validation.CodigoValidator
+import cl.duoc.mpazneb.domain.validation.ResultadoPegarCodigo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +36,15 @@ class CodigoViewModel(private val asignaciones: AsignacionRepository) : ViewMode
 
     fun borrar() = _estado.update { it.copy(codigo = it.codigo.dropLast(1), mensaje = null) }
 
+    fun pegarDesdePortapapeles(texto: String) {
+        when (val resultado = CodigoValidator.interpretarPortapapeles(texto)) {
+            is ResultadoPegarCodigo.Aceptado ->
+                _estado.update { it.copy(codigo = resultado.codigo, mensaje = null) }
+            is ResultadoPegarCodigo.Rechazado ->
+                _estado.update { it.copy(mensaje = resultado.mensaje) }
+        }
+    }
+
     fun entrar() {
         val codigo = _estado.value.codigo
         CodigoValidator.validar(codigo)?.let { error ->
@@ -51,6 +61,9 @@ class CodigoViewModel(private val asignaciones: AsignacionRepository) : ViewMode
                 ResultadoCodigo.NoExiste -> "Ese código no está. Pídele ayuda a tu asistente."
                 ResultadoCodigo.Vencido -> "Ese código ya venció. Pide uno nuevo."
                 ResultadoCodigo.YaUsado -> "Ese código ya se usó. Pide uno nuevo."
+                is ResultadoCodigo.Conflicto -> r.mensaje
+                is ResultadoCodigo.ErrorRed -> r.mensaje
+                is ResultadoCodigo.ReferenciasLocalesFaltantes -> r.mensaje
             }
             _estado.update { it.copy(verificando = false, mensaje = mensaje, errores = it.errores + 1) }
         }

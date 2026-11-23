@@ -9,6 +9,7 @@ import cl.duoc.mpazneb.domain.TextoCsv
 import cl.duoc.mpazneb.domain.validation.ActividadValidator
 import cl.duoc.mpazneb.domain.validation.AsignacionFormValidator
 import cl.duoc.mpazneb.domain.validation.CodigoValidator
+import cl.duoc.mpazneb.domain.validation.ResultadoPegarCodigo
 import cl.duoc.mpazneb.domain.validation.LoginValidator
 import cl.duoc.mpazneb.domain.validation.ObservacionValidator
 import cl.duoc.mpazneb.domain.validation.PreguntaValidator
@@ -23,6 +24,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ValidadoresTest {
+
+    @Test
+    fun pegarCodigoDesdePortapapeles() {
+        val seis = CodigoValidator.interpretarPortapapeles("559389")
+        assertTrue(seis is ResultadoPegarCodigo.Aceptado)
+        assertEquals("559389", (seis as ResultadoPegarCodigo.Aceptado).codigo)
+
+        val cero = CodigoValidator.interpretarPortapapeles("048213")
+        assertEquals("048213", (cero as ResultadoPegarCodigo.Aceptado).codigo)
+
+        val espacios = CodigoValidator.interpretarPortapapeles(" 559389 ")
+        assertEquals("559389", (espacios as ResultadoPegarCodigo.Aceptado).codigo)
+
+        assertTrue(CodigoValidator.interpretarPortapapeles("123") is ResultadoPegarCodigo.Rechazado)
+        assertTrue(CodigoValidator.interpretarPortapapeles("1234567") is ResultadoPegarCodigo.Rechazado)
+        assertTrue(CodigoValidator.interpretarPortapapeles("ABC123") is ResultadoPegarCodigo.Rechazado)
+        assertEquals(
+            "No hay ningún código copiado",
+            (CodigoValidator.interpretarPortapapeles("") as ResultadoPegarCodigo.Rechazado).mensaje
+        )
+        assertEquals(
+            "Copia un código de 6 números para pegarlo",
+            (CodigoValidator.interpretarPortapapeles("123") as ResultadoPegarCodigo.Rechazado).mensaje
+        )
+    }
 
     @Test
     fun codigoDeSeisNumeros() {

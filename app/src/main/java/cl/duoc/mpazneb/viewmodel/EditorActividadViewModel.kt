@@ -8,7 +8,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.duoc.mpazneb.contenedor
 import cl.duoc.mpazneb.data.repository.ActividadRepository
 import cl.duoc.mpazneb.data.repository.AuthRepository
+import cl.duoc.mpazneb.data.repository.LibroEncontrado
+import cl.duoc.mpazneb.data.repository.OpenLibraryRepository
 import cl.duoc.mpazneb.data.repository.ResultadoAccion
+import java.io.IOException
 import cl.duoc.mpazneb.device.AlmacenImagenes
 import cl.duoc.mpazneb.domain.validation.ActividadValidator
 import cl.duoc.mpazneb.domain.validation.ErroresActividad
@@ -50,7 +53,11 @@ data class EditorActividadUiState(
     val mensaje: String? = null,
     val mensajeEsError: Boolean = false,
     val sinPermiso: Boolean = false,
-    val navegarAId: Long? = null
+    val navegarAId: Long? = null,
+    val consultaLibros: String = "",
+    val buscandoLibros: Boolean = false,
+    val librosEncontrados: List<LibroEncontrado> = emptyList(),
+    val mensajeLibros: String? = null
 ) {
     val errores: ErroresActividad
         get() = if (!intentoGuardar) {
@@ -74,7 +81,8 @@ class EditorActividadViewModel(
     private val actividadIdInicial: Long,
     private val auth: AuthRepository,
     private val actividades: ActividadRepository,
-    private val almacen: AlmacenImagenes
+    private val almacen: AlmacenImagenes,
+    private val openLibrary: OpenLibraryRepository
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(
@@ -366,6 +374,50 @@ class EditorActividadViewModel(
     fun navegacionHecha() =
         _estado.update { it.copy(navegarAId = null) }
 
+    fun cambiarConsultaLibros(valor: String) =
+        _estado.update { it.copy(consultaLibros = valor, mensajeLibros = null) }
+
+    fun buscarLibros() {
+        val consulta = _estado.value.consultaLibros
+        if (consulta.isBlank()) {
+            _estado.update { it.copy(mensajeLibros = "Escribe el título o autor que quieres buscar.") }
+            return
+        }
+        viewModelScope.launch {
+            _estado.update { it.copy(buscandoLibros = true, mensajeLibros = null) }
+            try {
+                val resultados = openLibrary.buscar(consulta)
+                _estado.update {
+                    it.copy(
+                        buscandoLibros = false,
+                        librosEncontrados = resultados,
+                        mensajeLibros = if (resultados.isEmpty()) {
+                            "No encontramos libros con esa búsqueda."
+                        } else {
+                            null
+                        }
+                    )
+                }
+            }             catch (_: IOException) {
+                _estado.update {
+                    it.copy(
+                        buscandoLibros = false,
+                        librosEncontrados = emptyList(),
+                        mensajeLibros = "Sin conexión. Revisa tu red e inténtalo de nuevo."
+                    )
+                }
+            } catch (_: Exception) {
+                _estado.update {
+                    it.copy(
+                        buscandoLibros = false,
+                        librosEncontrados = emptyList(),
+                        mensajeLibros = "No pudimos consultar Open Library."
+                    )
+                }
+            }
+        }
+    }
+
     companion object {
         fun factory(actividadId: Long) = viewModelFactory {
             initializer {
@@ -375,7 +427,8 @@ class EditorActividadViewModel(
                     actividadId,
                     contenedor.authRepository,
                     contenedor.actividadRepository,
-                    contenedor.almacenImagenes
+                    contenedor.almacenImagenes,
+                    contenedor.openLibraryRepository
                 )
             }
         }

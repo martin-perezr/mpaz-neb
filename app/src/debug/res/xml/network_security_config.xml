@@ -1,7 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false" />
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
+    <!-- Solo debug: HTTP a 127.0.0.1 con adb reverse tcp:8080 tcp:8080. -->
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

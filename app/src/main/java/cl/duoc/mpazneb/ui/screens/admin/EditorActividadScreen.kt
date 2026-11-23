@@ -114,6 +114,11 @@ fun EditorActividadScreen(
                         estado.textoCuerpo, vm::cambiarTextoCuerpo, "Texto de lectura", estado.errores.texto,
                         unaLinea = false, lineasMin = 4
                     )
+                    BuscarLibrosSection(
+                        estado = estado,
+                        onConsulta = vm::cambiarConsultaLibros,
+                        onBuscar = vm::buscarLibros
+                    )
                 }
                 BotonPrincipal("Guardar actividad", vm::guardar, Modifier.fillMaxWidth())
             }

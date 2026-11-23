@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cl.duoc.mpazneb.model.Actividad
 import cl.duoc.mpazneb.model.Alternativa
@@ -19,8 +20,8 @@ import cl.duoc.mpazneb.model.Usuario
         Usuario::class, Estudiante::class, Actividad::class, Pregunta::class,
         Alternativa::class, Asignacion::class, Respuesta::class, Observacion::class
     ],
-    // Versión 3: la semilla suma actividades de 2.°, 3.° y 4.° básico. Si la base ya existía, se vuelve a crear.
-    version = 3,
+    // Versión 4: idRemoto enlaza la actividad local con SQLite del servidor.
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +34,12 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var instancia: AppDatabase? = null
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE actividades ADD COLUMN idRemoto INTEGER")
+            }
+        }
+
         /** Singleton: una sola conexión a la base para toda la app. */
         fun obtener(context: Context): AppDatabase =
             instancia ?: synchronized(this) {
@@ -42,7 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "mpazneb.db"
                 )
                     .addCallback(SemillaCallback())
-                    // MVP académico: si cambia el esquema se recrea la base; SemillaCallback vuelve a cargar los datos
+                    .addMigrations(MIGRATION_3_4)
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                     .also { instancia = it }
